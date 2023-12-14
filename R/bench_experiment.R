@@ -79,14 +79,11 @@ design <- benchmark_grid(tasks, learners, cv10)
 
 batchmark(design, store_models=FALSE, reg=reg)
 
-lapply(names(learners),
+lapply(names(resources),
     function(l) submitLrn(l,
         jobs_per_chunk=resources[[l]]$jobs_per_chunk,
         resources=resources[[l]],
         only_not_done=TRUE))
-
-#summarizeExperiments(by=c("learner_id"))
-#summarizeExperiments(findNotSubmitted(), by=c("learner_id"))
 
 #mlr3extralearners::create_learner(
     #path="learners",
