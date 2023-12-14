@@ -55,7 +55,7 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
       super$initialize(
         id = "surv.rgcca",
         packages = c("RGCCA", "glmnet", "survival", "survAUC", "SurvMetrics",
-                     "caret"),
+                     "caret", "data.table"),
         feature_types = c("integer", "numeric", "factor"),
         predict_types = c("crank", "lp", "distr"),
         param_set = param_set,

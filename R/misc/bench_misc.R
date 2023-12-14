@@ -1,0 +1,28 @@
+suppressMessages({
+    library(batchtools)
+})
+
+submitLrn <- function(lrn_id,
+                      jobs_per_chunk=1,
+                      resources=list(walltime=60*60, ncpus=1, memory=10000),
+                      only_not_done=FALSE,
+                      reg=getDefaultRegistry()) {
+
+    ids <- unwrap(getJobTable(if (only_not_done) findNotDone(), reg=reg))[
+        learner_id==lrn_id,
+        job.id
+    ]
+    chunks <- data.table(
+        job.id=ids,
+        chunk=batchtools::chunk(ids, chunk.size=jobs_per_chunk, shuffle=FALSE)
+    )
+    submitJobs(ids=chunks, resources=resources, reg=reg)
+
+}
+
+ifNotNA= function(e, default) {
+    exp = enexpr(e)
+    default = enexpr(default)
+    val = rlang::`!!`(e)
+    if (!is.na(val)) {return(val)} else {return(!!default)}
+}
