@@ -61,6 +61,16 @@ for (i in seq_along(done)) {
 bmrdt = rbindlist(bmrdt)
 fwrite(bmrdt, sprintf("%s/%s_results_%06d.rds", res_dir, reg_name, i))
 
+# from stackoverflow, add NA lines for iteration that failed
+# (e.g due to errors)
+# May have undefined behaviour if e.g every last iteration fails 
+# for every learner on every dataset
+iter_max = max(bmrdt$iteration)
+bmrdt = bmrdt[,
+    .SD[.(iteration=1:iter_max), on="iteration"],
+    by=.(learner_id, task_id)
+] 
+
 #reduceResultsBatchmark = function(ids = NULL, store_backends = TRUE, reg = batchtools::getDefaultRegistry()) { # nolint
 #  if (is.null(ids)) {
 #    ids = batchtools::findDone(ids, reg = reg)
