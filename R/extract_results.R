@@ -18,7 +18,7 @@ parser$add_argument("-r", "--registry", nargs=1,
     help="Name of registry to extract results from. The registry must exist")
 parser$add_argument("-N", "--Ncpus", default=1,
     help="number of cpu to use [default %(default)s]")
-parser$add_argument("-C", "--chunk_size", default=100,
+parser$add_argument("-C", "--chunk_size", default=100L, type="integer",
     help="when extracting, extract by small chunks of size C jobs
     A csv file will be created for each chunk [default $(default)s")
 parser$add_argument("-d", "--directory", default=1,
@@ -34,7 +34,7 @@ data.table::setDTthreads(args$Ncpus)
 registry_dir = paste0("registries/", args$registry)
 config_file = paste0("configs/", args$registry, ".config.R")
 res_dir = paste0(args$directory, "/", args$registry)
-isdir(res_dir) || mkdir(res_dir)
+if (!dir.exists(res_dir)) dir.create(res_dir)
 
 # Loading batchtools registry
 if (dir.exists(registry_dir)) {
@@ -47,19 +47,20 @@ reg$work.dir <- getwd()
 source(config_file)
 
 done = findDone()$job.id
-done = split(done, ceiling(seq_along(done)/chunk_size))
+done = split(done, ceiling(seq_along(done)/args$chunk_size))
 bmrdt = vector("list", length(done))
 for (i in seq_along(done)) {
     print(sprintf("%d/%d chunks", i, length(done)))
     bmr <- reduceResultsBatchmark(done[[i]], store_backends=TRUE)
     if (rds)
-        saveRDS(bmr, sprintf("%/s/%s_results_%06d.rds", res_dir, reg_name, i))
+        saveRDS(bmr, sprintf("%/s/%s_results_%06d.rds", res_dir, args$registry,
+                             i))
     cols = c("uhash", "nr", "task_id", "learner_id", "resampling_id",
              "iteration", sapply(measures, `[[`, "id"))
     bmrdt[[i]] = bmr$score(measures)[,..cols] 
 }
 bmrdt = rbindlist(bmrdt)
-fwrite(bmrdt, sprintf("%s/%s_results_%06d.rds", res_dir, reg_name, i))
+fwrite(bmrdt, sprintf("%s/%s_results.csv", res_dir, args$registry))
 
 # from stackoverflow, add NA lines for iteration that failed
 # (e.g due to errors)
