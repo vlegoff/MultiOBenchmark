@@ -87,7 +87,7 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
       # Get blocks
       block_list = lapply(
         pars$blocks,
-        function(bl) x[, .SD, .SDcols=names(x) %like% paste0(bl, "$")]
+        function(bl) x[, .SD, .SDcols=names(x) %like% paste0("_", bl, "$")]
       )
       names(block_list) <- pars$blocks
 
@@ -122,7 +122,7 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
                             fit_rgcca$Y[names(fit_rgcca$Y)!="residuals"])
 
       if (pars$clinical_fav) {
-        clinicals = x[, .SD, .SDcols=names(x) %like% "clinical"]
+        clinicals = x[, .SD, .SDcols=names(x) %like% "_clinical$"]
         latent_space = cbind(latent_space, as.matrix(clinicals))
       }
 
@@ -164,7 +164,7 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
           names(block_list),
           function(n) {
             ret = as.matrix(block_list[[n]][f])
-            colnames(ret) = paste0(n, "_", colnames(ret))
+            #colnames(ret) = paste0(n, "_", colnames(ret))
             ret
           }
         )
@@ -172,7 +172,8 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
         if(pars$supervised) {
           #null_mod = survival::coxph(ytest~1)
           fold_test[["residuals"]] = as.matrix(rep(1, length(ytest[,"time"])))
-          colnames(fold_test[["residuals"]]) = "residuals_residuals"
+          #colnames(fold_test[["residuals"]]) = "residuals_residuals"
+          colnames(fold_test[["residuals"]]) = "residuals"
         }
         #print(colnames(fold_test[["cnv"]]))
         rgcca_test = RGCCA::rgcca_transform(rgcca_train, fold_test)
@@ -240,7 +241,10 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
 
       block_list = lapply(
         pars$blocks,
-        function(bl) newx[, .SD, .SDcols=names(newx) %like% paste0(bl, "$")]
+        function(bl) newx[,
+          .SD,
+          .SDcols=names(newx) %like% paste0("_", bl, "$")
+        ]
       )
       names(block_list) = pars$blocks
 
@@ -248,7 +252,7 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
         names(block_list),
         function(n) {
             ret = as.matrix(block_list[[n]])
-            colnames(ret) = paste0(n, "_", colnames(ret))
+            #colnames(ret) = paste0(n, "_", colnames(ret))
             ret
         }
       )
@@ -256,7 +260,8 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
       if(pars$supervised) {
         #null_mod = survival::coxph(ytest~1)
         block_list[["residuals"]] = as.matrix(rep(1, nrow(newx)))
-        colnames(block_list[["residuals"]]) = "residuals_residuals"
+        #colnames(block_list[["residuals"]]) = "residuals_residuals"
+        colnames(block_list[["residuals"]]) = "residuals"
       }
       rgcca = RGCCA::rgcca_transform(self$model$rgcca, block_list)
 
@@ -282,9 +287,6 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
       lp = predict(self$model$glmnet,
                    newx=latent_space_new,
                    s=self$model$best_lambda)
-      print(lp)
-      print(fit$time)
-      print(length(fit$time))
 
       return(mlr3proba::.surv_return(times=fit$time,
                                      surv=t(fit$surv),
