@@ -1,4 +1,7 @@
-.libPaths(.libPaths()[[2]]) # to ensure use of local libs
+.libPaths("/env/export/v_home/q_unix/vlegoff/.local/lib/R/x86_64-el7-linux-gnu-library/4.1") # to ensure use of local libs
+
+print(R.Version())
+print(.libPaths())
 
 suppressMessages({
     library(mlr3verse)
@@ -83,7 +86,7 @@ lapply(names(resources),
     function(l) submitLrn(l,
         jobs_per_chunk=resources[[l]]$jobs_per_chunk,
         resources=resources[[l]],
-        only_not_done=TRUE))
+        not_done=TRUE))
 
 #mlr3extralearners::create_learner(
     #path="learners",
