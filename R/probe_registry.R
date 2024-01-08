@@ -1,4 +1,5 @@
-.libPaths(.libPaths()[[2]]) # to ensure use of local libs
+#.libPaths(.libPaths()[[2]]) # to ensure use of local libs
+.libPaths("/env/export/v_home/q_unix/vlegoff/.local/lib/R/x86_64-el7-linux-gnu-library/4.1") # to ensure use of local libs
 
 suppressMessages({
     library(batchtools)
