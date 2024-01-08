@@ -91,6 +91,7 @@ LearnerSurvjive = R6Class("LearnerSurvjive",
         rankJ=pars$rankJ,
         rankA=rep(pars$rankA, length(block_list)),
         method="given",
+        orthIndiv=FALSE,
         scale=TRUE,
         center=TRUE
       )
@@ -99,34 +100,47 @@ LearnerSurvjive = R6Class("LearnerSurvjive",
                          c(list(data=lapply(block_list, as.matrix)),
                            jive_args))
 
+      predict = r.jive::jive.predict(data.new=lapply(block_list, as.matrix),
+        fit_jive)
+
       latent_space = matrix(0,
         nrow=nrow(x),
         ncol=pars$rankJ+length(block_list)*pars$rankA)
 
-      if (pars$rankJ > 0) {
-        joint = Reduce(cbind, lapply(fit_jive$joint, t))
-        joint_SVD = svd(joint)
-        joint_PCs = joint_SVD$u[,1:pars$rankJ] %*%
-          diag(joint_SVD$d[1:pars$rankJ], ncol=pars$rankJ)
-        latent_space[,1:pars$rankJ] = joint_PCs
-      }
+      #if (pars$rankJ > 0) {
+      #  joint = Reduce(cbind, lapply(fit_jive$joint, t))
+      #  joint_SVD = svd(joint)
+      #  joint_PCs = joint_SVD$u[,1:pars$rankJ] %*%
+      #    diag(joint_SVD$d[1:pars$rankJ], ncol=pars$rankJ)
+      #  joint_weights = joint_SVD$v[,pars$rankJ]
+      #  latent_space[,1:pars$rankJ] = joint_PCs
+      #}
 
-      #ncomp = length(block_list) - supervised # rename to nblocks
-      #indiv = lapply(1:ncomp, function(i) t(fit_jive$individual[[i]])) 
-      if (pars$rankA > 0) {
-        indiv = lapply(seq_along(block_list),
-          function(i) t(fit_jive$individual[[i]])) 
-        indiv_SVD = lapply(indiv, svd)
-        indiv_PCs = sapply(
-          seq_along(block_list),
-          function(i) {
-            print(i)
-            indiv_SVD[[i]]$u[,1:fit_jive$rankA[i]] %*%
-              diag(indiv_SVD[[i]]$d[1:fit_jive$rankA[i]],
-                   ncol=fit_jive$rankA[i])
-            }
-        )
-        latent_space[,(pars$rankJ+1):ncol(latent_space)] = indiv_PCs
+      ##ncomp = length(block_list) - supervised # rename to nblocks
+      ##indiv = lapply(1:ncomp, function(i) t(fit_jive$individual[[i]])) 
+      #if (pars$rankA > 0) {
+      #  indiv = lapply(seq_along(block_list),
+      #    function(i) t(fit_jive$individual[[i]])) 
+      #  indiv_SVD = lapply(indiv, svd)
+      #  indiv_PCs = sapply(
+      #    seq_along(block_list),
+      #    function(i) {
+      #      print(i)
+      #      indiv_SVD[[i]]$u[,1:fit_jive$rankA[i]] %*%
+      #        diag(indiv_SVD[[i]]$d[1:fit_jive$rankA[i]],
+      #             ncol=fit_jive$rankA[i])
+      #      }
+      #  )
+      #  latent_space[,(pars$rankJ+1):ncol(latent_space)] = indiv_PCs
+      #}
+
+      if(pars$rankJ > 0) {
+        latent_space[,1:pars$rankJ] = t(predict$joint.scores)
+      }
+      
+      if(pars$rankA > 0) {
+        latent_space[,(pars$rankJ+1):ncol(latent_space)] = 
+          t(Reduce(rbind, predict$indiv.scores)) # cbind was not working
       }
 
  #     latent_space = Reduce(cbind,
@@ -162,30 +176,54 @@ LearnerSurvjive = R6Class("LearnerSurvjive",
           nrow=nrow(x)-length(f),
           ncol=pars$rankJ+length(block_list)*pars$rankA)
 
-        if (pars$rankJ > 0) {
-          joint = Reduce(cbind, lapply(jive_train$joint, t))
-          joint_SVD = svd(joint)
-          joint_PCs = joint_SVD$u[,1:pars$rankJ] %*%
-            diag(joint_SVD$d[1:pars$rankJ], ncol=pars$rankJ)
-          latent_space_train[,1:pars$rankJ] = joint_PCs
-        }
+        nweights = sum(sapply(fold_train, nrow))
+        weights_train = matrix(0,
+        nrow=nweights, ncol=pars$rankJ+length(block_list)*pars$rankA)
 
-        #ncomp = length(block_list) - supervised # rename to nblocks
-        #indiv = lapply(1:ncomp, function(i) t(fit_jive$individual[[i]])) 
-        if (pars$rankA > 0) {
-          indiv = lapply(seq_along(block_list),
-            function(i) t(jive_train$individual[[i]])) 
-          indiv_SVD = lapply(indiv, svd)
-          indiv_PCs = sapply(
-            seq_along(block_list),
-            function(i) {
-              print(i)
-              indiv_SVD[[i]]$u[,1:jive_train$rankA[i]] %*%
-                diag(indiv_SVD[[i]]$d[1:jive_train$rankA[i]],
-                     ncol=jive_train$rankA[i])
-              }
-          )
-          latent_space_train[,(pars$rankJ+1):ncol(latent_space_train)] = indiv_PCs
+        #if (pars$rankJ > 0) {
+        #  joint = Reduce(cbind, lapply(jive_train$joint, t))
+        #  joint_SVD = svd(joint)
+        #  joint_PCs = joint_SVD$u[,1:pars$rankJ] %*%
+        #    diag(joint_SVD$d[1:pars$rankJ], ncol=pars$rankJ)
+        #  latent_space_train[,1:pars$rankJ] = joint_PCs
+        #  weights_train[,1:pars$rankJ] = joint_SVD$v[,1:pars$rankJ]
+        #}
+
+        ##ncomp = length(block_list) - supervised # rename to nblocks
+        ##indiv = lapply(1:ncomp, function(i) t(fit_jive$individual[[i]])) 
+        #if (pars$rankA > 0) {
+        #  indiv = lapply(seq_along(block_list),
+        #    function(i) t(jive_train$individual[[i]])) 
+        #  indiv_SVD = lapply(indiv, svd)
+        #  indiv_PCs = sapply(
+        #    seq_along(block_list),
+        #    function(i) {
+        #      print(i)
+        #      indiv_SVD[[i]]$u[,1:jive_train$rankA[i]] %*%
+        #        diag(indiv_SVD[[i]]$d[1:jive_train$rankA[i]],
+        #             ncol=jive_train$rankA[i])
+        #      }
+        #  )
+        #  latent_space_train[,(pars$rankJ+1):ncol(latent_space_train)] =
+        #    indiv_PCs
+        #  weights_train[,(pars$rankJ+1):ncol(latent_space_train)] =
+        #    sapply(seq_along(block_list),
+        #      function(i) indiv_SVD[[i]]$v[,1:pars$rankA])
+        #}
+
+        train_pred = r.jive::jive.predict(fold_train, jive_train)
+
+        latent_space_train = matrix(0,
+          nrow=nrow(x)-length(f),
+          ncol=pars$rankJ+length(block_list)*pars$rankA)
+
+        if(pars$rankJ > 0) {
+          latent_space_train[,1:pars$rankJ] = t(train_pred$joint.scores)
+        }
+        
+        if(pars$rankA > 0) {
+          latent_space_train[,(pars$rankJ+1):ncol(latent_space_train)] = 
+            t(Reduce(rbind, train_pred$indiv.scores)) # cbind was not working
         }
 
         if(pars$clinical_fav) {
@@ -212,18 +250,13 @@ LearnerSurvjive = R6Class("LearnerSurvjive",
           nrow=length(f), ncol=pars$rankJ+length(block_list)*pars$rankA)
 
         if(pars$rankJ > 0) {
-          latent_space_test[,1:pars$rankJ] = jive_test$joint.scores
+          latent_space_test[,1:pars$rankJ] = t(jive_test$joint.scores)
         }
         
         if(pars$rankA > 0) {
           latent_space_test[,(pars$rankJ+1):ncol(latent_space_test)] = 
             t(Reduce(rbind, jive_test$indiv.scores)) # cbind was not working
         }
-
-        latent_space_test = Reduce(cbind,
-          c(if (rankJ!=0) list(t(jive_test$joint.scores)),
-            if (any(rankA!=0)) lapply(jive_test$indiv.scores, t))
-        )
 
         if(pars$clinical_fav) {
           latent_space_test = cbind(latent_space_test,
@@ -284,7 +317,7 @@ LearnerSurvjive = R6Class("LearnerSurvjive",
 
       block_list = lapply(
         pars$blocks,
-        function(bl) newx[, .SD, .SDcols=names(newx) %like% paste0(bl, "$")]
+        function(bl) newx[, .SD, .SDcols=names(newx) %like% paste0("_", bl, "$")]
       )
       names(block_list) = pars$blocks
 
@@ -298,14 +331,22 @@ LearnerSurvjive = R6Class("LearnerSurvjive",
 
       jive = r.jive::jive.predict(block_list, self$model$jive)
 
+      latent_space_new = matrix(0,
+        nrow=nrow(newx),
+        ncol=self$model$jive$rankJ+length(block_list)*self$model$jive$rankA)
+
+      if(self$model$jive$rankJ > 0) {
+        latent_space_new[,1:pars$rankJ] = t(jive$joint.scores)
+      }
+      
+      if(pars$rankA > 0) {
+        latent_space_new[,(pars$rankJ+1):ncol(latent_space_new)] = 
+          t(Reduce(rbind, jive$indiv.scores)) # cbind was not working
+      }
+
       #latent_space_new = Reduce(cbind,
                                 #c(list(t(jive$joint.score)),
                                   #lapply(jive$indiv.score, t)))
-      latent_space_new = Reduce(cbind,
-        c(if (rankJ!=0) list(t(jive$joint.scores)),
-          if (any(rankA!=0)) lapply(jive$indiv.scores, t))
-      )
-
 
       if(pars$clinical_fav) {
         clinicals = newx[, .SD, .SDcols=names(newx) %like% "clinical"]

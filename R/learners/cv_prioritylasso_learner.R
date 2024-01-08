@@ -25,7 +25,7 @@ LearnerSurvCVPrioritylasso <- R6Class("LearnerSurvCVPrioritylasso",
         cvoffset = p_lgl(default = TRUE, tags = "train"),
         cvoffsetnfolds = p_int(3, 10, default = 5),
         alpha = p_dbl(0, 1, default = 0.95),
-        clinical_favoring=p_lgl(default=FALSE, tags=train)
+        clinical_favoring=p_lgl(default=FALSE, tags="train")
       )
 
       super$initialize(
@@ -41,8 +41,8 @@ LearnerSurvCVPrioritylasso <- R6Class("LearnerSurvCVPrioritylasso",
       suppressPackageStartupMessages({
         #source(here::here("noise_resistance", "R", "utils", "utils.R"))
         #source(here::here("noise_resistance", "R", "utils", "imports.R"))
-        source("learners/imports.R")
-        source("learners/utils.R")
+        source("R/misc/learner_imports.R")
+        source("R/misc/learner_utils.R")
         library(prioritylasso)
         library(mlr3misc)
       })
@@ -56,7 +56,7 @@ LearnerSurvCVPrioritylasso <- R6Class("LearnerSurvCVPrioritylasso",
       block_order <- get_prioritylasso_block_order(
         target, data, 
         unique(sapply(strsplit(task$feature_names, "\\_"), tail, 1)), 
-        pv$lambda.type, favor_clinical=clinical_favoring
+        pv$lambda.type, favor_clinical=pv$clinical_favoring
       )
       # Get feature -> modality index mapping.
       blocks <- get_block_assignment(block_order, task$feature_names)
@@ -89,8 +89,8 @@ LearnerSurvCVPrioritylasso <- R6Class("LearnerSurvCVPrioritylasso",
     },
     .predict = function(task) {
       suppressPackageStartupMessages({
-        source("misc/learner_imports.R")
-        source("misc/learner_utils.R")
+        source("R/misc/learner_imports.R")
+        source("R/misc/learner_utils.R")
         library(pec)
         library(mlr3proba)
       })

@@ -49,7 +49,7 @@ LearnerSurvBlockForest <- R6Class("LearnerSurvBlockForest",
         library(survival)
         #library(here)
         #source(here::here("noise_resistance", "R", "utils", "utils.R"))
-        source("misc/learner_utils.R")
+        source("R/misc/learner_utils.R")
       })
 
       pv <- self$param_set$get_values(tags = "train")
