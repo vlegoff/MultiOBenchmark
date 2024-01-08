@@ -1,4 +1,5 @@
-.libPaths(.libPaths()[[2]]) # to ensure use of local libs
+#.libPaths(.libPaths()[[2]]) # to ensure use of local libs
+.libPaths("/env/export/v_home/q_unix/vlegoff/.local/lib/R/x86_64-el7-linux-gnu-library/4.1") # to ensure use of local libs
 
 suppressMessages({
     library(mlr3verse)
@@ -21,10 +22,12 @@ parser$add_argument("-N", "--Ncpus", default=1,
 parser$add_argument("-C", "--chunk_size", default=100L, type="integer",
     help="when extracting, extract by small chunks of size C jobs
     A csv file will be created for each chunk [default $(default)s")
-parser$add_argument("-d", "--directory", default=1,
+parser$add_argument("-d", "--directory", default="results",
     help="where to store results")
+parser$add_argument("--rds", action="store_true", default=FALSE,
+    help="store results to rds")
 
-rds = FALSE # add it as a parser argument
+#rds = FALSE # add it as a parser argument
 
 args = parser$parse_args()
 
@@ -60,87 +63,23 @@ for (i in seq_along(done)) {
     bmrdt[[i]] = bmr$score(measures)[,..cols] 
 }
 bmrdt = rbindlist(bmrdt)
+
+err = unwrap(getJobTable(findErrors()))[,
+    .(job.name, repl, task_id, learner_id, resampling_id, error)
+]
+colnames(err)[colnames(err) == "job.name"] = "uhash"
+colnames(err)[colnames(err) == "repl"] = "iteration"
+
+bmrdt = rbindlist(list(bmrdt, err), fill=TRUE)
+
 fwrite(bmrdt, sprintf("%s/%s_results.csv", res_dir, args$registry))
 
 # from stackoverflow, add NA lines for iteration that failed
 # (e.g due to errors)
 # May have undefined behaviour if e.g every last iteration fails 
 # for every learner on every dataset
-iter_max = max(bmrdt$iteration)
-bmrdt = bmrdt[,
-    .SD[.(iteration=1:iter_max), on="iteration"],
-    by=.(learner_id, task_id)
-] 
-
-#reduceResultsBatchmark = function(ids = NULL, store_backends = TRUE, reg = batchtools::getDefaultRegistry()) { # nolint
-#  if (is.null(ids)) {
-#    ids = batchtools::findDone(ids, reg = reg)
-#  } else {
-#    ids = batchtools::findJobs(ids = ids, reg = reg) # convert to proper table
-#    if (nrow(batchtools::findNotDone(ids, reg = reg))) {
-#      stop("All jobs must have been successfully computed")
-#    }
-#  }
-#
-#  tabs = batchtools::getJobTable(ids, reg = reg)[, c("job.id", "job.name", "repl", "prob.pars", "algo.pars"), with = FALSE]
-#  tabs = unnest(tabs, c("prob.pars", "algo.pars"))
-#  tabs = split(tabs, by = "job.name")
-#  bmr = mlr3::BenchmarkResult$new()
-#
-#  for (tab in tabs) {
-#    job = batchtools::makeJob(tab$job.id[1L], reg = reg)
-#    bmr_tasks = bmr$tasks
-#    bmr_learners = bmr$learners
-#    bmr_resamplings = bmr$resamplings
-#
-#    needle = job$prob.pars$task_hash
-#    ii = bmr_tasks[list(needle), on = "task_hash", which = TRUE, nomatch = NULL]
-#    if (length(ii)) {
-#      task = bmr_tasks$task[[ii]]
-#    } else {
-#      task = job$problem$data
-#    }
-#
-#    needle = job$prob.pars$resampling_hash
-#    ii = bmr_resamplings[list(needle), on = "resampling_hash", which = TRUE, nomatch = NULL]
-#    if (length(ii)) {
-#      resampling = bmr_resamplings$resampling[[ii]]
-#    } else {
-#      resampling = get_export(needle, reg)
-#    }
-#
-#    needle = job$algo.pars$learner_hash
-#    ii = bmr_learners[list(needle), on = "learner_hash", which = TRUE, nomatch = NULL]
-#    if (length(ii)) {
-#      learner = bmr_learners$learner[[ii]]
-#    } else {
-#      learner = get_export(needle, reg)
-#    }
-#
-#    results = batchtools::reduceResultsList(tab$job.id, reg = reg)
-#    param_values = lapply(lapply(results, getElement, "learner_state"),
-#                          getElement, "param_vals")
-#    learner_hash = tab[, learner_hash]
-#    #print(test)
-#    rdata = mlr3::ResultData$new(data.table(
-#      task = list(task),
-#      learner = list(learner),
-#      resampling = list(resampling),
-#      iteration = tab$repl,
-#      prediction = map(results, "prediction"),
-#      learner_state = map(results, "learner_state"),
-#      param_values = param_values,
-#      learner_hash = learner_hash,
-#      uhash = tab$job.name
-#    ), store_backends = store_backends)
-#    #print(rdata)
-#    bmr$combine(mlr3::BenchmarkResult$new(rdata))
-#  }
-#
-#  return(bmr)
-#}
-
-#get_export = function(needle, reg) {
-  #readRDS(batchtools::batchExport(reg = reg)[list(needle), on = "name"]$uri)
-#}
-
+#iter_max = max(bmrdt$iteration)
+#bmrdt = bmrdt[,
+    #.SD[.(iteration=1:iter_max), on="iteration"],
+    #by=.(learner_id, task_id)
+#] 
