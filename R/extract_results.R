@@ -55,7 +55,7 @@ bmrdt = vector("list", length(done))
 for (i in seq_along(done)) {
     print(sprintf("%d/%d chunks", i, length(done)))
     bmr <- reduceResultsBatchmark(done[[i]], store_backends=TRUE)
-    if (rds)
+    if (args$rds)
         saveRDS(bmr, sprintf("%/s/%s_results_%06d.rds", res_dir, args$registry,
                              i))
     cols = c("uhash", "nr", "task_id", "learner_id", "resampling_id",
@@ -64,13 +64,15 @@ for (i in seq_along(done)) {
 }
 bmrdt = rbindlist(bmrdt)
 
-err = unwrap(getJobTable(findErrors()))[,
-    .(job.name, repl, task_id, learner_id, resampling_id, error)
-]
-colnames(err)[colnames(err) == "job.name"] = "uhash"
-colnames(err)[colnames(err) == "repl"] = "iteration"
+if(nrow(findErrors()) > 0) {
+    err = unwrap(getJobTable(findErrors()))[,
+        .(job.name, repl, task_id, learner_id, resampling_id, error)
+    ]
+    colnames(err)[colnames(err) == "job.name"] = "uhash"
+    colnames(err)[colnames(err) == "repl"] = "iteration"
+    bmrdt = rbindlist(list(bmrdt, err), fill=TRUE)
+}
 
-bmrdt = rbindlist(list(bmrdt, err), fill=TRUE)
 
 fwrite(bmrdt, sprintf("%s/%s_results.csv", res_dir, args$registry))
 
