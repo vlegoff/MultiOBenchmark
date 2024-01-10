@@ -37,28 +37,31 @@ print("Jobs summary:")
 print(summ)
 print(paste0("total: ", tot))
 if (nrow(done)>0) {
-    summ = summarizeExperiments(done, by=c("learner_id", "task_id"))
+    by = if(nrow(done) < 100) c("learner_id", "task_id") else "learner_id"
+    summ = summarizeExperiments(done, by=by)
     tot = sum(summ$.count)
     print("Jobs done:")
     print(summ)
     print(paste0("total: ", tot))
 }
 if (nrow(not_sub)>0) {
-    summ = summarizeExperiments(not_sub, by=c("learner_id", "task_id"))
+    by = if(nrow(not_sub) < 100) c("learner_id", "task_id") else "learner_id"
+    summ = summarizeExperiments(not_sub, by=by)
     tot = sum(summ$.count)
     print("Jobs not submitted:")
     print(summ)
     print(paste0("total: ", tot))
 }
 if (nrow(not_done)>0) {
-    summ = summarizeExperiments(not_done, by=c("learner_id", "task_id"))
+    by = if(nrow(not_done) < 100) c("learner_id", "task_id") else "learner_id"
+    summ = summarizeExperiments(not_done, by=by)
     tot = sum(summ$.count)
     print("Jobs not done:")
     print(summ)
     print(paste0("total: ", tot))
 }
 if (nrow(err)>0) {
-    summ = summarizeExperiments(err, by=c("learner_id", "task_id"))
+    summ = summarizeExperiments(err, by=c("learner_id"))
     tot = sum(summ$.count)
     print("Errors")
     print(summ)
