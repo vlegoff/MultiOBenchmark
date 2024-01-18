@@ -11,6 +11,8 @@ submitLrn <- function(lrn_id,
     ids = findNotSubmitted()
     if (not_done) ids = rbind(ids, findNotDone())
     ids = ids[!duplicated(ids)]
+    err = findErrors()
+    ids = ids[!(job.id %in% err$job.id)]
     #if (errors) ids = rbind(ids, findErrors())
     ids <- unwrap(getJobTable(ids, reg=reg))[
         learner_id==lrn_id,
