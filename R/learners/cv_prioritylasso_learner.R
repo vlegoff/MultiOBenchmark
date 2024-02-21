@@ -95,13 +95,19 @@ LearnerSurvCVPrioritylasso <- R6Class("LearnerSurvCVPrioritylasso",
         library(mlr3proba)
       })
 
-      newdata <- as_numeric_matrix(ordered_features(task, self))
+      #newdata <- as_numeric_matrix(ordered_features(task, self))
+      newdata = task$data()[,.SD, .SDcols=task$feature_names] # ensure target is not in data
       newdata <- data.frame(newdata)[, colnames(newdata) %in% names(self$model$coefficients)]
-      surv <- pec::predictSurvProb(self$model, newdata, self$model$y[, 1])
+      #surv <- pec::predictSurvProb(self$model, newdata, self$model$y[, 1])
+      surv = survival::survfit(self$model, newdata, se.fit=FALSE)
       lp <- predict(self$model, newdata)
+      #return(mlr3proba::.surv_return(
+        #times = self$model$y[, 1],
+        #surv = surv,
+        #lp = lp
       return(mlr3proba::.surv_return(
-        times = self$model$y[, 1],
-        surv = surv,
+        times = surv$time,
+        surv = t(surv$surv),
         lp = lp
       ))
     }
