@@ -74,6 +74,7 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
       x = task$data(cols=task$feature_names)
       ysurv = task$truth()
 
+      # setting seed for internal CV reproducibility
       set.seed(pars$seed)
 
       # Some checks
@@ -83,6 +84,7 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
         stop("Clinical cannot be in both blocks and latent space")
 
       # ncomp must be inferior or equal to smallest block
+      # add check
 
       # Get blocks
       block_list = lapply(
@@ -102,7 +104,7 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
       rownames(complete_matrix) = pars$blocks
       colnames(complete_matrix) = pars$blocks
 
-      # Compute rgcca
+      # Define RGCCA args
       rgcca_args = list(
         response=if(pars$supervised) length(block_list),
         connection=if(!pars$supervised) complete_matrix,
@@ -115,35 +117,37 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
         verbose=F
       )
 
+      # compute RGCCA on whole dataset
       fit_rgcca = do.call(RGCCA::rgcca,
                           c(list(blocks=lapply(block_list, as.matrix)),
                             rgcca_args))
       latent_space = Reduce(cbind,
                             fit_rgcca$Y[names(fit_rgcca$Y)!="residuals"])
 
-      if (pars$clinical_fav) {
+      if (pars$clinical_fav) { # adding clinical data if necessary
         clinicals = x[, .SD, .SDcols=names(x) %like% "_clinical$"]
         latent_space = cbind(latent_space, as.matrix(clinicals))
       }
 
-      #Fit glmnet to get lambdas
+      #Fit glmnet to get lambda sequence used in internal CV loop
       glmnet_fit = glmnet::glmnet(latent_space, ysurv, family="cox", alpha=0,
                                   nlambda=100)
       lambdas = glmnet_fit$lambda
 
       folds = caret::createFolds(ysurv[, "status"], k=pars$nfolds, list=TRUE)
 
-      results = list()
-      for (f in folds) {
+      results = list() # should be vector("list", length=10)
+      for (f in folds) { # Internal CV loop
 
         #train
         ytrain = ysurv[-f]
         fold_train = lapply(block_list, function(x) as.matrix(x[-f]))
-        if(pars$supervised) {
+        if(pars$supervised) { # get residuals on train set
           null_mod = survival::coxph(ytrain~1)
           fold_train[["residuals"]] = residuals(null_mod, type="deviance")
         }
 
+        # compute latent space of training data
         rgcca_train = do.call(RGCCA::rgcca,
                               c(list(blocks=fold_train), rgcca_args))
         latent_space_train = Reduce(
@@ -155,29 +159,31 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
                                      as.matrix(clinicals[-f]))
         }
         
+        # fit glmnet on train data
         glmnet_train = glmnet::glmnet(latent_space_train, ytrain,
                                       family="cox", alpha=0, lambda=lambdas)
 
         #test
         ytest = ysurv[f]
-        fold_test = lapply( # ensuring colnames respect rgcca conventions
+        fold_test = lapply(
           names(block_list),
           function(n) {
             ret = as.matrix(block_list[[n]][f])
-            #colnames(ret) = paste0(n, "_", colnames(ret))
+            #colnames(ret) = paste0(n, "_", colnames(ret)) # useless now
             ret
           }
         )
         names(fold_test) = names(block_list)
         if(pars$supervised) {
+          # actual residuals are not needed for prediction
+          # any random values will work
           #null_mod = survival::coxph(ytest~1)
           fold_test[["residuals"]] = as.matrix(rep(1, length(ytest[,"time"])))
           #colnames(fold_test[["residuals"]]) = "residuals_residuals"
           colnames(fold_test[["residuals"]]) = "residuals"
         }
-        #print(colnames(fold_test[["cnv"]]))
-        rgcca_test = RGCCA::rgcca_transform(rgcca_train, fold_test)
 
+        rgcca_test = RGCCA::rgcca_transform(rgcca_train, fold_test)
         latent_space_test = Reduce(
           cbind,
           rgcca_test[names(rgcca_test)!="residuals"]
@@ -190,6 +196,7 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
         #fit = survival::survfit(glmnet_train, x=latent_space_train, y=ytrain,
                           #weights=glmnet_train$weights, newx=latent_space_test,
                           #se.fit=FALSE)
+        # Computing CV measure
         if (pars$CV_measure == "cindex") {
           fit = predict(glmnet_train, newx=as.matrix(latent_space_test))
           res = apply(fit, 2, function(lp) survAUC::UnoC(ytrain, ytest, lp))
