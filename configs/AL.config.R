@@ -1,6 +1,3 @@
-#.libPaths(.libPaths()[[2]])
-.libPaths("/env/export/v_home/q_unix/vlegoff/.local/lib/R/x86_64-el7-linux-gnu-library/4.1") # to ensure use of local libs
-
 suppressMessages({
     library(mlr3verse)
     library(mlr3proba)
@@ -12,7 +9,7 @@ suppressMessages({
 
 source("R/learners/cv_prioritylasso_learner.R")
 source("R/learners/blockforest_learner.R")
-source("R/learners/CoxBoost_clin_fav_surv_learner.R")
+#source("R/learners/CoxBoost_clin_fav_surv_learner.R")
 source("R/learners/IPFlasso_surv_learner.R")
 source("R/learners/glmboost_surv_learner.R")
 
@@ -24,8 +21,8 @@ learners <- list(
     lrn("surv.ranger", id="ranger", min.node.size=3),
     lrn("surv.cv_glmnet", id="lasso", alpha=1, s="lambda.min",
         type.measure="C"),
-    lrn("surv.cv_coxboost", id="coxboost", maxstepno=100),
-    lrn("surv.cv_coxboost_clin_fav", id="coxboost_clin_fav", maxstepno=100),
+    #lrn("surv.cv_coxboost", id="coxboost", maxstepno=100),
+    #lrn("surv.cv_coxboost_clin_fav", id="coxboost_clin_fav", maxstepno=100),
     auto_tuner(
         tuner=tnr("grid_search", resolution=100, batch_size=1),
         learner=lrn(
@@ -83,7 +80,7 @@ learners <- list(
 
 resources = list(
     "ranger"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=50
+        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=1
     ),
     "lasso"=list(
         walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=50
@@ -94,26 +91,28 @@ resources = list(
     #"coxboost"=list(
         #walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=30
     #),
-    "surv.glmboost.tuned"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=50
-    ),
-    "prioritylasso"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
-    ),
-    "prioritylasso_clin_fav"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
-    ),
+    #"surv.glmboost.tuned"=list(
+        #walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=50
+    #),
+    #"prioritylasso"=list(
+        #walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
+    #),
+    #"prioritylasso_clin_fav"=list(
+        #walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
+    #),
     "blockforest"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
+        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=1
     ),
     "ipflasso"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
+        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=1
     )
 )
 
 measures = list(
     msr("surv.cindex", weight_meth="G2"), # uno C
     msr("surv.graf"), # ibrier
+    msr("surv.rcll"),
+    msr("surv.dcalib"),
     msr("time_train"),
     msr("time_predict"),
     msr("time_both")

@@ -38,6 +38,8 @@ resources = list(
 measures = list(
     msr("surv.cindex", weight_meth="G2"), # uno C
     msr("surv.graf"), # ibrier
+    msr("surv.rcll"),
+    msr("surv.dcalib"),
     msr("time_train"),
     msr("time_predict"),
     msr("time_both")
