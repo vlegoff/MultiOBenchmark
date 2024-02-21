@@ -1,6 +1,3 @@
-#.libPaths(.libPaths()[[2]]) # to ensure use of local libs
-.libPaths("/env/export/v_home/q_unix/vlegoff/.local/lib/R/x86_64-el7-linux-gnu-library/4.1") # to ensure use of local libs
-
 suppressMessages({
     library(batchtools)
     library(data.table)
@@ -11,6 +8,8 @@ parser = ArgumentParser()
 
 parser$add_argument("-r", "--registry", nargs=1,
     help="Name of registry to extract results from. The registry must exist")
+parser$add_argument("-m", "--message", action="store_true", default=FALSE,
+    help="print error messages")
 
 args = parser$parse_args()
 
@@ -23,13 +22,14 @@ if (dir.exists(registry_dir)) {
     stop("registry must exists")
 }
 
+# not used anymore, never worked properly
 v = function(...) cat(sprintf(...), sep='', file=stdout())
 verr = function(...) cat(sprintf(...), sep='', file=stderr())
 
 done = findDone()
 not_sub = findNotSubmitted()
-not_done = findNotDone()
 err = findErrors()
+not_done = findNotDone()[!job.id %in% err$job.id]
 
 summ = summarizeExperiments(by=c("learner_id"))
 tot = sum(summ$.count)
@@ -66,6 +66,8 @@ if (nrow(err)>0) {
     print("Errors")
     print(summ)
     print(paste0("total: ", tot))
-    print("Error messages:")
-    print(getErrorMessages())
+    if (args$message) {
+        print("Error messages:")
+        print(getErrorMessages())
+    }
 }

@@ -1,6 +1,3 @@
-#.libPaths(.libPaths()[[2]]) # to ensure use of local libs
-.libPaths("/env/export/v_home/q_unix/vlegoff/.local/lib/R/x86_64-el7-linux-gnu-library/4.1") # to ensure use of local libs
-
 suppressMessages({
     library(mlr3verse)
     library(mlr3proba)
@@ -71,6 +68,7 @@ if(nrow(findErrors()) > 0) {
     colnames(err)[colnames(err) == "job.name"] = "uhash"
     colnames(err)[colnames(err) == "repl"] = "iteration"
     bmrdt = rbindlist(list(bmrdt, err), fill=TRUE)
+    # fill=TRUE sould not be necessary now, remove it
 }
 
 
@@ -80,6 +78,7 @@ fwrite(bmrdt, sprintf("%s/%s_results.csv", res_dir, args$registry))
 # (e.g due to errors)
 # May have undefined behaviour if e.g every last iteration fails 
 # for every learner on every dataset
+# replaced with the if(nrow(findErrors()) > 0) block
 #iter_max = max(bmrdt$iteration)
 #bmrdt = bmrdt[,
     #.SD[.(iteration=1:iter_max), on="iteration"],
