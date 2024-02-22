@@ -13,11 +13,13 @@ tsk_peng$data() # -> pour voir les data
 ## Automatic plot
 autoplot(tsk_peng)
 
-## Splits
+## Split train et test
 splits <- partition(tsk_peng)
 
-## Train, pour chercher un learner : https://mlr-org.com/learners.html
+## Train. Pour chercher un learner : https://mlr-org.com/learners.html
 lrn_rpart <- lrn("classif.rpart")
 lrn_rpart$train(tsk_peng, splits$train)
+
+## Test + score : https://mlr-org.com/measures.html
 prediction <- lrn_rpart$predict(tsk_peng, splits$test)
 prediction$score(msr("classif.acc"))
