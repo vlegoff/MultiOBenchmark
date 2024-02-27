@@ -6,13 +6,16 @@ submitLrn <- function(lrn_id,
                       jobs_per_chunk=1,
                       resources=list(walltime=60*60, ncpus=1, memory=10000),
                       not_done=FALSE,
+                      resubmit_errors=FALSE,
                       reg=getDefaultRegistry()) {
 
     ids = findNotSubmitted()
     if (not_done) ids = rbind(ids, findNotDone())
     ids = ids[!duplicated(ids)]
-    err = findErrors()
-    ids = ids[!(job.id %in% err$job.id)]
+    if (!resubmit_errors) {
+        err = findErrors()
+        ids = ids[!(job.id %in% err$job.id)]
+    }
     #if (errors) ids = rbind(ids, findErrors())
     ids <- unwrap(getJobTable(ids, reg=reg))[
         learner_id==lrn_id,
