@@ -233,6 +233,8 @@ LearnerSurvrgcca = R6Class("LearnerSurvrgcca",
       list(rgcca=fit_rgcca,
            glmnet=glmnet_fit,
            best_lambda=best_lambda,
+           cv_grid=results,
+           folds=folds,
            y=ysurv,
            x=latent_space)
     },
