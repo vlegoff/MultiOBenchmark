@@ -3,3 +3,4 @@ results/
 slurm_logs/
 data/
 .Rproj.user
+.Rhistory
