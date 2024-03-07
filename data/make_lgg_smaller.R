@@ -70,5 +70,8 @@ lgg <- cbind(
   mirna
 )
 
+names(lgg) <- gsub("-", "_", names(lgg))
+lgg <- lgg %>% dplyr::select(-starts_with("_"), -starts_with("."))
+
 ## Sauvegarde
 save(lgg, file = "hackathon/minilgg.RData")
