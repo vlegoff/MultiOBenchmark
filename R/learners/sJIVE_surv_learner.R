@@ -236,7 +236,7 @@ LearnerSurvsjive = R6Class("LearnerSurvsjive",
 
       results = Reduce(rbind, results)
 
-      select_best = ifelse(pars$CV_measure %in% c("cindex, auc"),
+      select_best = ifelse(pars$CV_measure %in% c("cindex", "auc"),
                            which.max,
                            which.min)
       mean_results = apply(results, 2, mean, na.rm=TRUE)
