@@ -5,17 +5,25 @@ suppressMessages({
 submitLrn <- function(lrn_id,
                       jobs_per_chunk=1,
                       resources=list(walltime=60*60, ncpus=1, memory=10000),
-                      not_done=FALSE,
+                      resubmit_not_finished=FALSE,
                       resubmit_errors=FALSE,
                       reg=getDefaultRegistry()) {
 
     ids = findNotSubmitted()
-    if (not_done) ids = rbind(ids, findNotDone())
-    ids = ids[!duplicated(ids)]
-    if (!resubmit_errors) {
-        err = findErrors()
-        ids = ids[!(job.id %in% err$job.id)]
-    }
+    err =  findErrors()
+    not_finished = findNotDone()[
+        !(job.id %in% ids$job.id | job.id %in% err$job.id)
+    ]
+    if (args$resubmit_errors) ids = rbind(ids, err)
+    if (!args$resubmit_not_finished) ids = rbind(ids, not_finished)
+
+    #ids = findNotSubmitted()
+    #if (not_done) ids = rbind(ids, findNotDone())
+    #ids = ids[!duplicated(ids)]
+    #if (!resubmit_errors) {
+        #err = findErrors()
+        #ids = ids[!(job.id %in% err$job.id)]
+    #}
     #if (errors) ids = rbind(ids, findErrors())
     ids <- unwrap(getJobTable(ids, reg=reg))[
         learner_id==lrn_id,

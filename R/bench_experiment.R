@@ -25,6 +25,8 @@ parser$add_argument("-s", "--seed", default=1234,
     help="seed used to create resampling folds [default %(default)s]")
 parser$add_argument("--resubmit_errors", action="store_true",
     help="")
+parser$add_argument("--resubmit_not_finished", action="store_true",
+    help="")
 parser$add_argument("--pegasus", action="store_true",
     help="")
 
@@ -80,38 +82,42 @@ if(!args$pegasus) {
         function(l) submitLrn(l,
             jobs_per_chunk=resources[[l]]$jobs_per_chunk,
             resources=resources[[l]],
-            not_done=TRUE,
-            resubmit_errors=args$resubmit_errors))
+            resubmit_errors=args$resubmit_errors,
+            resubmit_not_finished=args$resubmit_not_finished))
 } else {
     pegasus_dir = paste0(reg$file.dir, "/pegasus")
     if (dir.exists(pegasus_dir)) {
-        unlink(pegasus_dir)
+        unlink(pegasus_dir, recursive=TRUE)
     }
     dir.create(pegasus_dir)
-    jobs = getJobTable(findNotDone())
-    if (!args$resubmit_errors) {
-        errs = findErrors()
-        jobs = jobs[!job.id %in% errs$job.id]
-    }
+
+    ids = findNotSubmitted()
+    err =  findErrors()
+    not_finished = findNotDone()[
+        !(job.id %in% ids$job.id | job.id %in% err$job.id)
+    ]
+    if (args$resubmit_errors) ids = rbind(ids, err)
+    if (!args$resubmit_not_finished) ids = rbind(ids, not_finished)
+    jobs = getJobTable(ids)
+
     dag = vector("character", nrow(jobs))
     dag_rm = vector("character", nrow(jobs))
     edges_rm = vector("character", nrow(jobs))
     for (i in 1:nrow(jobs)) {
-        if (is.na(jobs[i, job.hash])) {
-            jobs[i, job.hash:=digest::digest(jobs[i, ], algo="md5")]
-        }
         collection = makeJobCollection(jobs[i, job.id])
-        collection_file = paste0(reg$file.dir, "/pegasus/", jobs[i, job.hash],
-                                 ".rds")
+        collection_file = paste0(reg$file.dir, "/pegasus/",
+            collection$job.hash[1], ".rds")
+        if(is.na(jobs[i, job.hash])) jobs[i, job.hash] = collection$job.hash[1]
         saveRDS(collection, collection_file)
-        dag[i] = paste0("TASK ", jobs[i, job.hash], " -c 1",
+        dag[i] = paste0("TASK ", collection$job.hash[1], " -c 1",
             " bash -Eeo pipefail -c ",
             "\"Rscript -e \\\'batchtools::doJobCollection(\\\"", 
             collection_file, "\\\")\\\'\"")
-        dag_rm[i] = paste0("TASK ", jobs[i, job.hash], "_rm -c 1",
-            "bash -Eeo pipefail -c \"rm ", collection_file, "\"")
-        edges_rm[i] = paste0("EDGE ", jobs[i, job.hash], " ",
-            jobs[i, job.hash], "_rm")
+        reg$status[i, submitted] = as.numeric(Sys.time())
+        #dag_rm[i] = paste0("TASK ", jobs[i, job.hash], "_rm -c 1",
+            #"bash -Eeo pipefail -c \"rm ", collection_file, "\"")
+        #edges_rm[i] = paste0("EDGE ", jobs[i, job.hash], " ",
+            #jobs[i, job.hash], "_rm")
     }
     fileConn = file(paste0(reg$file.dir, "/pegasus/tasks.dag"))
     writeLines(dag, fileConn)
