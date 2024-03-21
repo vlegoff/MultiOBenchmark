@@ -97,32 +97,45 @@ if(!args$pegasus) {
         !(job.id %in% ids$job.id | job.id %in% err$job.id)
     ]
     if (args$resubmit_errors) ids = rbind(ids, err)
-    if (!args$resubmit_not_finished) ids = rbind(ids, not_finished)
+    if (args$resubmit_not_finished) ids = rbind(ids, not_finished)
     jobs = getJobTable(ids)
+    if(nrow(jobs) == 0) {
+        stop("nothing to run")
+    }
 
     dag = vector("character", nrow(jobs))
-    dag_rm = vector("character", nrow(jobs))
-    edges_rm = vector("character", nrow(jobs))
     for (i in 1:nrow(jobs)) {
         collection = makeJobCollection(jobs[i, job.id])
         collection_file = paste0(reg$file.dir, "/pegasus/",
             collection$job.hash[1], ".rds")
-        if(is.na(jobs[i, job.hash])) jobs[i, job.hash] = collection$job.hash[1]
+        if(is.na(jobs[i, job.hash]))
+            jobs[i, job.hash := collection$job.hash[1]]
         saveRDS(collection, collection_file)
         dag[i] = paste0("TASK ", collection$job.hash[1], " -c 1",
             " bash -Eeo pipefail -c ",
             "\"Rscript -e \\\'batchtools::doJobCollection(\\\"", 
             collection_file, "\\\")\\\'\"")
-        reg$status[i, submitted] = as.numeric(Sys.time())
-        #dag_rm[i] = paste0("TASK ", jobs[i, job.hash], "_rm -c 1",
-            #"bash -Eeo pipefail -c \"rm ", collection_file, "\"")
-        #edges_rm[i] = paste0("EDGE ", jobs[i, job.hash], " ",
-            #jobs[i, job.hash], "_rm")
+        reg$status[i, submitted := as.numeric(Sys.time())]
     }
     fileConn = file(paste0(reg$file.dir, "/pegasus/tasks.dag"))
     writeLines(dag, fileConn)
     close(fileConn)
+
+    brew_env = new.env()
+    brew_env$resources = resources[["pegasus"]]
+    brew_env$job = list(
+        registry=args$registry,
+        dag=base::normalizePath(paste0(reg$file.dir, "/pegasus/tasks.dag"))
+    )
+    brew::brew(file="hpc_templates/pegasus.tmpl",
+        output=paste0(pegasus_dir, "/launcher.sh"),
+        envir=brew_env)
+
+    system("module load pegasus")
+    system(paste0("ccc_msub ", pegasus_dir, "/launcher.sh"))
 }
+
+saveRegistry(reg)
 
 #mlr3extralearners::create_learner(
     #path="learners",

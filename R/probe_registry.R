@@ -29,7 +29,7 @@ verr = function(...) cat(sprintf(...), sep='', file=stderr())
 done = findDone()
 not_sub = findNotSubmitted()
 err = findErrors()
-not_done = findNotDone()[!job.id %in% err$job.id]
+not_done = findNotDone()[!(job.id %in% err$job.id | job.id %in% not_sub$job.id)]
 
 summ = summarizeExperiments(by=c("learner_id"))
 tot = sum(summ$.count)
@@ -56,7 +56,7 @@ if (nrow(not_done)>0) {
     by = if(nrow(not_done) < 100) c("learner_id", "task_id") else "learner_id"
     summ = summarizeExperiments(not_done, by=by)
     tot = sum(summ$.count)
-    print("Jobs not done:")
+    print("Jobs not finished:")
     print(summ)
     print(paste0("total: ", tot))
 }

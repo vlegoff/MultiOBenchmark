@@ -10,12 +10,13 @@ submitLrn <- function(lrn_id,
                       reg=getDefaultRegistry()) {
 
     ids = findNotSubmitted()
+    print(ids)
     err =  findErrors()
     not_finished = findNotDone()[
         !(job.id %in% ids$job.id | job.id %in% err$job.id)
     ]
-    if (args$resubmit_errors) ids = rbind(ids, err)
-    if (!args$resubmit_not_finished) ids = rbind(ids, not_finished)
+    if (resubmit_errors) ids = rbind(ids, err)
+    if (resubmit_not_finished) ids = rbind(ids, not_finished)
 
     #ids = findNotSubmitted()
     #if (not_done) ids = rbind(ids, findNotDone())
@@ -25,6 +26,7 @@ submitLrn <- function(lrn_id,
         #ids = ids[!(job.id %in% err$job.id)]
     #}
     #if (errors) ids = rbind(ids, findErrors())
+    if(nrow(ids)==0) {stop("nothing to run")}
     ids <- unwrap(getJobTable(ids, reg=reg))[
         learner_id==lrn_id,
         job.id

@@ -22,14 +22,17 @@ learners <- list(
 )
 
 resources = list(
+    "pegasus"=list(walltime=60*60*1, ntasks=20, mem="10G", log="logs"),
     "kaplan"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=100
+        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=50,
+        chunks.as.arrayjobs=TRUE
     ),
     "clin_ref"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=300
+        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=50,
+        chunks.as.arrayjobs=TRUE
     ),
     "glmnet_clin"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=300
+        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=50
     )
 )
 
