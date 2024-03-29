@@ -72,10 +72,18 @@ tasks <- mclapply(datasets,
     mc.cores=args$Ncpus)
 names(tasks) <- datasets
 
-cv10 <- rsmp("repeated_cv", repeats=10, folds=5)
-design <- benchmark_grid(tasks, learners, cv10)
+# check if cv has been defined in config
+# mainly for backward compatibility
+cv <- if(!exists("cv")) {
+    rsmp("repeated_cv", repeats=10, folds=5)
+} else {
+    cv
+}
+paired_cv = ifelse(!exists("paired_cv"), F, paired_cv)
+store_models = ifelse(!exists("store_models"), F, store_models)
 
-batchmark(design, store_models=FALSE, reg=reg)
+design <- benchmark_grid(tasks, learners, cv, paired=paired_cv)
+batchmark(design, store_models=store_models, reg=reg)
 
 if(!args$pegasus) {
     lapply(names(resources),
