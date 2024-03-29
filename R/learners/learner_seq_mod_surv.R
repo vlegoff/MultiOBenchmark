@@ -23,6 +23,7 @@
 #' @export
 
 suppressPackageStartupMessages({library(R6)})
+source("R/misc/learner_utils.R")
 
 LearnerSeqMod = R6Class("LearnerSeqMod",
   inherit = mlr3proba::LearnerSurv,
@@ -113,10 +114,14 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
                                   nlambda=pars$nlambdas)
       lambdas = glmnet_fit$lambda
 
-      folds = caret::createFolds(ysurv[, "status"], k=pars$nfolds, list=TRUE)
+      folds = caret::createFolds(factor(ysurv[, "status"]), k=pars$nfolds, list=TRUE)
 
       #results = vector("list", length=pars$nfolds)
-      results = matrix(NA, nrow=pars$nfolds, ncol=pars$nlambdas)
+      if(pars$CV_measure=="linpred") {
+        results = matrix(NA, nrow=nrow(JDR$x), ncol=length(lambdas))
+      } else {
+        results = matrix(NA, nrow=pars$nfolds, ncol=length(lambdas))
+      }
       for (i in seq_along(folds)) { # Internal CV loop
         #train
         f = folds[[i]]
@@ -149,38 +154,126 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
         if (pars$CV_measure == "cindex") {
           fit = predict(glmnet_train, newx=JDR_test$x)
           res = apply(fit, 2, function(lp) survAUC::UnoC(ytrain, ytest, lp))
-        } else if (pars$CV_measure == "ibrier") {
-          fit = survival::survfit(glmnet_train, x=JDR_train$x,
-                                  y=ytrain, weights=glmnet_train$weights,
-                                  newx=JDR_test$x, se.fit=FALSE)
-          probs = lapply(fit, getElement, name="surv")
-          res = sapply(
-              probs,
-              function(p) 
-                  SurvMetrics::IBS(ytest, t(p),
-                                   IBSrange=c(min(ysurv[,"time"]),
-                                              max(ysurv[,"time"])))
-          )
+          results[i, ] = res
+
+        } else if (pars$CV_measure == "ibs") {
+          res = vector(mode="numeric", length=length(lambdas))
+          times = sort(unique(ytrain[, "time"]))
+          coef = coef(glmnet_train)
+          for (j in seq_along(lambdas)) {
+            cox_helper = transform_cox_model(coef[, j], JDR_train$x, ytrain)
+            newdata <- as.data.frame(cbind(ytest, JDR_test$x))
+            colnames(newdata)[1:2] <- c("OS_days", "OS")
+            score = survival::brier(cox_helper, newdata=newdata, times=times)
+            res[j] = Dint(times, score$brier,
+              range=c(times[1], times[length(times)]))
+          }
+          results[i, ] = res/(max(times)-min(times))
+
+        } else if (pars$CV_measure == "ibsRR") {
+          res = vector(mode="numeric", length=length(lambdas))
+          times = sort(unique(ytrain[, "time"]))
+          maxtime = times[length(times)]
+          coef = coef(glmnet_train)
+          for (j in seq_along(lambdas)) {
+            cox_helper = transform_cox_model(coef[, j], JDR_train$x, ytrain)
+            newdata <- as.data.frame(cbind(ytest, JDR_test$x))
+            colnames(newdata)[1:2] <- c("OS_days", "OS")
+            pred = riskRegression::Score(list(cox_helper), Hist(OS_days, OS)~1,
+              data=newdata,
+              metrics="Brier",
+              summary="ibs",
+              times=times,
+              se.fit=F,
+              conf.int=F)
+            #res[j] = pred$Brier$score[
+              #model=="coxph" & times==maxtime,
+              #IBS
+            #]
+            res[j] = tail(pred$Brier$score[model=="coxph", IBS], 1)
+          }
+          results[i, ] = res
+
+        } else if (pars$CV_measure == "basic") {
+          #fit = predict(glmnet_train, newx=JDR_test$x)
+          #res = glmnet::coxnet.deviance(pred=fit, y=ytest)
+          coef = coef(glmnet_train)
+          loglik_test = vector(mode="numeric", length=length(lambdas))
+          for (j in seq_along(lambdas)) {
+            cox_helper_test = transform_cox_model(coef[, j], JDR_test$x, ytest)
+            loglik_test[j] = cox_helper_test$loglik[2]
+          }
+          results[i, ] = loglik_test
+
+        } else if (pars$CV_measure == "V&VH") {
+          coef = coef(glmnet_train)
+          whole_x = rbind(JDR_train$x, JDR_test$x)
+          whole_y = c(ytrain, ytest)
+          #pred_whole = predict(glmnet_train, newx=whole_x)
+          #loglik_whole = glmnet::coxnet.deviance(pred_whole,
+              #y=c(ytrain, ytest))
+          loglik_whole = vector(mode="numeric", length=length(lambdas))
+          loglik_train = vector(mode="numeric", length=length(lambdas))
+          for (j in seq_along(lambdas)) {
+            cox_helper_whole = transform_cox_model(coef[, j], whole_x, whole_y)
+            cox_helper_train = transform_cox_model(coef[, j], JDR_train$x, ytrain)
+            loglik_whole[j] = cox_helper_whole$loglik[2]
+            loglik_train[j] = cox_helper_train$loglik[2]
+          }
+          #fit = predict(glmnet_train, newx=JDR_train$x)
+          #res = glmnet::coxnet.deviance(pred=fit, y=ytrain)
+          results[i, ] = loglik_whole - loglik_train
+
+        } else if (pars$CV_measure == "deviance") {
+          res = vector(mode="numeric", length=length(lambdas))
+          coef = coef(glmnet_train)
+          for (j in seq_along(lambdas)) {
+            cox_helper = transform_cox_model(coef[, j], JDR_test$x, ytest)
+            res[j] = sum(residuals(cox_helper, type="deviance")^2)
+          }
+          results[i, ] = res
+
+        } else if (pars$CV_measure == "linpred") {
+          res = vector(mode="numeric", length=length(lambdas))
+          results[f, ] = predict(glmnet_train, newx=JDR_test$x)
+
         } else if (pars$CV_measure == "auc") {
           fit = predict(glmnet_train, newx=JDR_test$x)
-          res = apply(fit, 2, function(lp) survAUC::AUC.uno(ytrain, ytest, lp))
+          res = apply(fit, 2,
+            function(lp) survAUC::AUC.uno(ytrain, ytest, lp,
+                                          times=max(ytrain[,"time"])))
+          results[i, ] = res
         }
-        #results = c(results, list(res))
-        results[i, ] = res
-
       }
       #results = Reduce(rbind, results)
 
-      select_best = ifelse(pars$CV_measure %in% c("cindex, auc"),
+      #select_best = ifelse(pars$CV_measure %in% c("cindex, auc"), # LA CONNERIE !
+      select_best = ifelse(pars$CV_measure %in% c("cindex", "auc", "C"),
                            which.max,
                            which.min)
-      mean_results = apply(results, 2, mean, na.rm=TRUE)
-      best_lambda = lambdas[select_best(mean_results)]
+      if(pars$CV_measure=="linpred") {
+        #aggr_results = glmnet::coxnet.deviance(results, y=ysurv)
+        #aggr_results = aggr_results - 2*llsat
+        aggr_results = vector(mode="numeric", length=length(lambdas))
+        for (j in seq_along(lambdas)) {
+          #cox_helper = transform_cox_model(1, results[, j], ysurv)
+          cox_helper = coxph(ysurv ~ results[, j], init=1, iter.max=0)
+          aggr_results[j] = -2*cox_helper$loglik[2]
+        }
+      } else if(pars$CV_measure=="basic" | pars$CV_measure=="V&VH" ) {
+        aggr_results = -2*apply(results, 2, sum)
+      } else if(pars$CV_measure=="deviance") {
+        aggr_results = apply(results, 2, sum)
+      } else {
+          aggr_results = apply(results, 2, mean)
+      }
+      best_lambda = lambdas[select_best(aggr_results)]
 
       list(JDR=JDR$jdr,
            glmnet=glmnet_fit,
            best_lambda=best_lambda,
            cv_grid=results,
+           cv_results=aggr_results,
            folds=folds,
            y=ysurv,
            x=JDR$x)
@@ -204,7 +297,7 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
       JDR_new = private$predict_jdr(block_list, self$model$JDR, pars)
 
       if(pars$clinical_fav) {
-        clinicals = as.matrix(newx[, .SD, .SDcols=names(newx) %like% "clinical"])
+        clinicals = as.matrix(newx[, .SD, .SDcols=names(newx) %like% "_clinical$"])
         JDR_new$x = cbind(JDR_new$x, clinicals)
       }
 
