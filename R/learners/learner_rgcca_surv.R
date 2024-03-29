@@ -43,7 +43,8 @@ LearnerSurvRGCCA = R6Class("LearnerSurvRGCCA",
                       tags=c("train")),
         nfolds=p_int(1L, default=10L, tags=c("train")),
         nlambdas=p_int(10L, 1000L, default=100L, tags=c("train")),
-        CV_measure=p_fct(c("cindex", "ibrier", "auc"), default="cindex",
+        CV_measure=p_fct(c("cindex", "ibs", "ibsRR",  "auc", "C", "deviance",
+                           "basic", "V&VH", "linpred"), default="cindex",
                           tags=c("train")),
         seed=p_int(0L, special_vals=list(NULL), default=NULL, tags=c("train"))
       )
@@ -76,11 +77,13 @@ LearnerSurvRGCCA = R6Class("LearnerSurvRGCCA",
                 colnames(complete_matrix) = pars$blocks
             }
 
+            tau = rep(pars$tau, length(x))
+            if (pars$supervised) tau = c(tau, 0)
+
             private$rgcca_args = list(
                 response=if(pars$supervised) length(x) + 1,
                 connection=if(!pars$supervised) complete_matrix,
-                tau=c(rep(pars$tau, length(x)),
-                      pars$tau*(!pars$supervised)),
+                tau=tau,
                 ncomp=pars$ncomp,
                 scheme=pars$scheme,
                 method="rgcca",
@@ -96,9 +99,14 @@ LearnerSurvRGCCA = R6Class("LearnerSurvRGCCA",
         }
 
         rgcca_fit = mlr3misc::invoke(RGCCA::rgcca,
-            .args=c(list(blocks=x), private$pca_args))
+            .args=c(list(blocks=x), private$rgcca_args))
         comps = Reduce(cbind,
             rgcca_fit$Y[names(rgcca_fit$Y)!="residuals"])
+        colnames(comps) = paste(
+            rep(pars$blocks, each=private$rgcca_args$ncomp),
+            rep(1:private$rgcca_args$ncomp, private$rgcca_args$ncomp),
+            sep="."
+        )
         return(list(x=comps, jdr=rgcca_fit))
     },
 
@@ -109,10 +117,15 @@ LearnerSurvRGCCA = R6Class("LearnerSurvRGCCA",
         }
         rgcca_pred = RGCCA::rgcca_transform(jdr, newx)
         pred_space = Reduce(cbind, rgcca_pred[names(rgcca_pred)!="residuals"])
+        colnames(pred_space) = paste(
+            rep(pars$blocks, each=private$rgcca_args$ncomp),
+            rep(1:private$rgcca_args$ncomp, private$rgcca_args$ncomp),
+            sep="."
+        )
         return(list(x=pred_space))
     }
 
   )
 )
 
-mlr3::mlr_learners$add("surv.rgcca2", LearnerSurvRGCCA)
+mlr3::mlr_learners$add("surv.rgcca", LearnerSurvRGCCA)
