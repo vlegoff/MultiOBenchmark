@@ -67,6 +67,8 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
         return(newx)
     },
     .train = function(task) {
+
+      source("R/misc/learner_utils.R")
       # get parameters for training
       pars = self$param_set$get_values(tags="train")
 
@@ -123,6 +125,7 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
         results = matrix(NA, nrow=pars$nfolds, ncol=length(lambdas))
       }
       for (i in seq_along(folds)) { # Internal CV loop
+        print(i)
         #train
         f = folds[[i]]
         ytrain = ysurv[-f]
@@ -195,33 +198,33 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
           results[i, ] = res
 
         } else if (pars$CV_measure == "basic") {
-          #fit = predict(glmnet_train, newx=JDR_test$x)
-          #res = glmnet::coxnet.deviance(pred=fit, y=ytest)
-          coef = coef(glmnet_train)
-          loglik_test = vector(mode="numeric", length=length(lambdas))
-          for (j in seq_along(lambdas)) {
-            cox_helper_test = transform_cox_model(coef[, j], JDR_test$x, ytest)
-            loglik_test[j] = cox_helper_test$loglik[2]
-          }
+          fit = predict(glmnet_train, newx=JDR_test$x)
+          loglik_test = glmnet::coxnet.deviance(pred=fit, y=ytest)
+          #coef = coef(glmnet_train)
+          #loglik_test = vector(mode="numeric", length=length(lambdas))
+          #for (j in seq_along(lambdas)) {
+            #cox_helper_test = transform_cox_model(coef[, j], JDR_test$x, ytest)
+            #loglik_test[j] = cox_helper_test$loglik[2]
+          #}
           results[i, ] = loglik_test
 
         } else if (pars$CV_measure == "V&VH") {
           coef = coef(glmnet_train)
           whole_x = rbind(JDR_train$x, JDR_test$x)
           whole_y = c(ytrain, ytest)
-          #pred_whole = predict(glmnet_train, newx=whole_x)
-          #loglik_whole = glmnet::coxnet.deviance(pred_whole,
-              #y=c(ytrain, ytest))
-          loglik_whole = vector(mode="numeric", length=length(lambdas))
-          loglik_train = vector(mode="numeric", length=length(lambdas))
-          for (j in seq_along(lambdas)) {
-            cox_helper_whole = transform_cox_model(coef[, j], whole_x, whole_y)
-            cox_helper_train = transform_cox_model(coef[, j], JDR_train$x, ytrain)
-            loglik_whole[j] = cox_helper_whole$loglik[2]
-            loglik_train[j] = cox_helper_train$loglik[2]
-          }
-          #fit = predict(glmnet_train, newx=JDR_train$x)
-          #res = glmnet::coxnet.deviance(pred=fit, y=ytrain)
+          pred_whole = predict(glmnet_train, newx=whole_x)
+          loglik_whole = glmnet::coxnet.deviance(pred_whole,
+              y=c(ytrain, ytest))
+          #loglik_whole = vector(mode="numeric", length=length(lambdas))
+          #loglik_train = vector(mode="numeric", length=length(lambdas))
+          #for (j in seq_along(lambdas)) {
+            #cox_helper_whole = transform_cox_model(coef[, j], whole_x, whole_y)
+            #cox_helper_train = transform_cox_model(coef[, j], JDR_train$x, ytrain)
+            #loglik_whole[j] = cox_helper_whole$loglik[2]
+            #loglik_train[j] = cox_helper_train$loglik[2]
+          #}
+          fit = predict(glmnet_train, newx=JDR_train$x)
+          loglik_train = glmnet::coxnet.deviance(pred=fit, y=ytrain)
           results[i, ] = loglik_whole - loglik_train
 
         } else if (pars$CV_measure == "deviance") {
@@ -252,20 +255,21 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
                            which.max,
                            which.min)
       if(pars$CV_measure=="linpred") {
-        #aggr_results = glmnet::coxnet.deviance(results, y=ysurv)
+        aggr_results = glmnet::coxnet.deviance(results, y=ysurv)
         #aggr_results = aggr_results - 2*llsat
-        aggr_results = vector(mode="numeric", length=length(lambdas))
-        for (j in seq_along(lambdas)) {
+        #aggr_results = vector(mode="numeric", length=length(lambdas))
+        #for (j in seq_along(lambdas)) {
           #cox_helper = transform_cox_model(1, results[, j], ysurv)
-          cox_helper = coxph(ysurv ~ results[, j], init=1, iter.max=0)
-          aggr_results[j] = -2*cox_helper$loglik[2]
-        }
+          #cox_helper = survival::coxph(ysurv ~ results[, j], init=1, iter.max=0)
+          #aggr_results[j] = -2*cox_helper$loglik[2]
+        #}
       } else if(pars$CV_measure=="basic" | pars$CV_measure=="V&VH" ) {
-        aggr_results = -2*apply(results, 2, sum)
+        #aggr_results = -2*apply(results, 2, sum)
+        aggr_results = apply(results, 2, sum)
       } else if(pars$CV_measure=="deviance") {
         aggr_results = apply(results, 2, sum)
       } else {
-          aggr_results = apply(results, 2, mean)
+        aggr_results = apply(results, 2, mean, na.rm=T)
       }
       best_lambda = lambdas[select_best(aggr_results)]
 
@@ -295,6 +299,7 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
       names(block_list) = pars$blocks
 
       JDR_new = private$predict_jdr(block_list, self$model$JDR, pars)
+      print(JDR_new$x)
 
       if(pars$clinical_fav) {
         clinicals = as.matrix(newx[, .SD, .SDcols=names(newx) %like% "_clinical$"])
@@ -314,13 +319,17 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
       }
       
       # Calculate predictions for the selected predict type.
+      print("which lambda")
       which_lambda = which(self$model$best_lambda==self$model$glmnet$lambda)
+      print(which_lambda)
+      print("survfit")
       fit = survival::survfit(self$model$glmnet,
                               s=self$model$best_lambda,
                               x=self$model$x,
                               y=self$model$y,
                               newx=JDR_new$x,
                               se.fit=FALSE)
+      print("glmnet")
       lp = predict(self$model$glmnet,
                    newx=JDR_new$x,
                    s=self$model$best_lambda)
