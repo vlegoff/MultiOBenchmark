@@ -60,8 +60,30 @@ transform_cox_model <- function(coefficients, data, target) {
   # Initialize Cox model at the coefficient estimates - we don't actually
   # fit the model here, since we are only interested in using `coxph` with
   # `pec` to easily produce survival function estimates.
+  #print(coefficients)
   cox_helper <- coxph(Surv(OS_days, OS) ~ ., x = TRUE, init = coefficients, iter.max = 0, data = data.frame(train_matrix), ties="breslow")
   return(cox_helper)
+}
+
+Dint <- function(x,y,range,na.omit=FALSE){
+            if (is.null(range)) range=c(x[1],x[length(x)])
+            ##   integrate a step function f with
+            ##   values y=f(x) between range[1] and range[2]
+            start <- max(range[1],min(x))
+            Stop <- min(range[2],max(x))
+            if ((Stop-start)<=0)
+                return(0)
+            else{
+                Y=y[x>=start & x<Stop]
+                X=x[x>=start & x<Stop]
+                if (na.omit){
+                    X=X[!is.na(Y)]
+                    Y=Y[!is.na(Y)]
+                } else if (any(is.na(Y))|| any(is.na(X))){
+                    return(NA)
+                }
+                return(1/(Stop-start) * sum(Y*diff(c(X,Stop))))
+            }
 }
 
 #' Calculate priority order based on an adaptive step as described in

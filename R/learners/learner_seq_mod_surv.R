@@ -319,17 +319,14 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
       }
       
       # Calculate predictions for the selected predict type.
-      print("which lambda")
       which_lambda = which(self$model$best_lambda==self$model$glmnet$lambda)
       print(which_lambda)
-      print("survfit")
       fit = survival::survfit(self$model$glmnet,
                               s=self$model$best_lambda,
                               x=self$model$x,
                               y=self$model$y,
                               newx=JDR_new$x,
                               se.fit=FALSE)
-      print("glmnet")
       lp = predict(self$model$glmnet,
                    newx=JDR_new$x,
                    s=self$model$best_lambda)

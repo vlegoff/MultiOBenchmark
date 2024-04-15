@@ -51,7 +51,7 @@ LearnerSurvRGCCA = R6Class("LearnerSurvRGCCA",
       param_set$values = param_set$default
 
       super$initialize(
-        id = "surv.rgcca2",
+        id = "surv.rgcca",
         packages = c("RGCCA", "mlr3misc"),
         feature_types = c("integer", "numeric", "factor"),
         predict_types = c("crank", "lp", "distr"),
@@ -107,6 +107,10 @@ LearnerSurvRGCCA = R6Class("LearnerSurvRGCCA",
             rep(1:private$rgcca_args$ncomp, private$rgcca_args$ncomp),
             sep="."
         )
+        #for (b in names(rgcca_fit$blocks)) { # trick to avoid storing blocks, not working though
+            #rgcca_fit$blocks[[b]] = 1
+            #rgcca_fit$call$blocks[[b]] = 1
+        #}
         return(list(x=comps, jdr=rgcca_fit))
     },
 

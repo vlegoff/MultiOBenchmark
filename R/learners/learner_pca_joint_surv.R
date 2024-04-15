@@ -38,14 +38,15 @@ LearnerSurvPCAJ = R6Class("LearnerSurvPCAJ",
         rankJ=p_int(1L, default=1L, tags=c("train", "predict")),
         nfolds=p_int(1L, default=10L, tags=c("train")),
         nlambdas=p_int(10L, 1000L, default=100L, tags=c("train")),
-        CV_measure=p_fct(c("cindex", "ibrier", "auc"), default="cindex",
+        CV_measure=p_fct(c("cindex", "ibs", "ibsRR",  "auc", "C", "deviance",
+                           "basic", "V&VH", "linpred"), default="cindex",
                           tags=c("train")),
         seed=p_int(0L, special_vals=list(NULL), default=NULL, tags=c("train"))
       )
       param_set$values = param_set$default
 
       super$initialize(
-        id = "surv.pcajoint",
+        id = "surv.pca_joint",
         packages = c("ade4", "mlr3misc"),
         feature_types = c("integer", "numeric", "factor"),
         predict_types = c("crank", "lp", "distr"),
