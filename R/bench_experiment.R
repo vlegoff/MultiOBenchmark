@@ -72,20 +72,31 @@ tasks <- mclapply(datasets,
     mc.cores=args$Ncpus)
 names(tasks) <- datasets
 
-# check if cv has been defined in config
-# mainly for backward compatibility
-cv <- if(!exists("cv")) {
-    rsmp("repeated_cv", repeats=10, folds=5)
-} else {
-    cv
-}
 paired_cv = ifelse(!exists("paired_cv"), F, paired_cv)
 store_models = ifelse(!exists("store_models"), F, store_models)
+# check if cv has been defined in config
+# mainly for backward compatibility
+if(!exists("cv")) {
+    cv = rsmp("repeated_cv", repeats=10, folds=5)
+} else if (cv$id=="custom") {
+    if(!paired_cv) stop("cv is custom but not paired")
+    if(!exists("folds")) stop("cv is custom but no folds are provided")
+    if(!length(folds)==length(datasets)) stop("wrong number of resamplings")
+    cv = vector("list", length=length(tasks)) 
+    for(i in seq_along(datasets)) {
+        d = datasets[i]
+        cv[[i]] = rsmp("custom")$instantiate(tasks[[d]],
+            train=folds[[d]]$train, test=folds[[d]]$test)
+    }
+} else {
+    cv = cv
+}
 
 design <- benchmark_grid(tasks, learners, cv, paired=paired_cv)
 batchmark(design, store_models=store_models, reg=reg)
 
 if(!args$pegasus) {
+    resources = resources[names(resources)!="pegasus"]
     lapply(names(resources),
         function(l) submitLrn(l,
             jobs_per_chunk=resources[[l]]$jobs_per_chunk,
