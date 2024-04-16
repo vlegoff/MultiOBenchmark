@@ -44,7 +44,8 @@ LearnerSurvSJIVE = R6Class("LearnerSurvSJIVE",
         CV_measure=p_fct(c("cindex", "ibs", "ibsRR",  "auc", "C", "deviance",
                            "basic", "V&VH", "linpred"), default="cindex",
                           tags=c("train")),
-        seed=p_int(0L, special_vals=list(NULL), default=NULL, tags=c("train"))
+        seed=p_int(0L, special_vals=list(NULL), default=NULL, tags=c("train")),
+        max.iter=p_int(1L, default=1000L, tags=c("train"))
       )
       param_set$values = param_set$default
 
@@ -63,6 +64,7 @@ LearnerSurvSJIVE = R6Class("LearnerSurvSJIVE",
   private = list(
 
     jive_args = NULL,
+    cols = NULL,
 
     train_jdr = function(x, y, pars) {
         
@@ -72,22 +74,21 @@ LearnerSurvSJIVE = R6Class("LearnerSurvSJIVE",
               rankA=rep(pars$rankA, length(x)),
               eta=pars$eta,
               center.scale=TRUE,
-              reduce.dim=FALSE
+              reduce.dim=TRUE,
+              max.iter=pars$max.iter
             )
         }
 
         x = lapply(x, t) # why oh god why
-        # removing all 0 columns to avoid sjive bug
-        #cols = lapply(x, function(xi) as.logical(rowSums(xi!=0)))
-        #x = lapply(x, function(bl) bl[as.logical(rowSums(bl!=0)),])
+        # removing all 0 variables to avoid sjive bug
+        private$cols = lapply(x, function(xi) as.logical(rowSums(xi!=0)))
+        x = lapply(names(x), function(n) x[[n]][private$cols[[n]],])
 
         null_mod = survival::coxph(y~1)
         resi = residuals(null_mod, type="deviance")
 
-        print("computing sJIVE decomposition")
         jive_fit = mlr3misc::invoke(sup.r.jive::sJIVE,
           .args=c(list(X=x, Y=resi), private$jive_args))
-        print("finished")
 
         latent_space = matrix(0,
           nrow=ncol(x[[1]]),
@@ -112,17 +113,21 @@ LearnerSurvSJIVE = R6Class("LearnerSurvSJIVE",
 
     predict_jdr = function(newx, jdr, pars) {
         newx = lapply(newx, t)
+        if(!is.null(private$cols)) {
+          newx = lapply(names(newx),
+                        function(n) newx[[n]][private$cols[[n]],])
+        }
 
-        predict = predict(jdr, newdata=new.x)
+        predict = predict(jdr, newdata=newx)
 
         latent_space = matrix(0,
           nrow=ncol(newx[[1]]),
           ncol=private$jive_args$rankJ+length(newx)*private$jive_args$rankA[1])
 
-        latent_space[,1:private$jive_args$rankJ] = t(predict$S_J)
+        latent_space[,1:private$jive_args$rankJ] = t(predict$Sj)
         
         latent_space[,(private$jive_args$rankJ+1):ncol(latent_space)] = 
-          t(Reduce(rbind, predict$S_I)) # cbind was not working
+          t(Reduce(rbind, predict$Si)) # cbind was not working
 
         colnames(latent_space) = c(
             paste0("common.", 1:pars$rankJ),

@@ -273,6 +273,11 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
       }
       best_lambda = lambdas[select_best(aggr_results)]
 
+      print(self$id)
+      if(self$id=="surv.sjive") {
+          private$cols = NULL
+      }
+
       list(JDR=JDR$jdr,
            glmnet=glmnet_fit,
            best_lambda=best_lambda,
@@ -299,7 +304,6 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
       names(block_list) = pars$blocks
 
       JDR_new = private$predict_jdr(block_list, self$model$JDR, pars)
-      print(JDR_new$x)
 
       if(pars$clinical_fav) {
         clinicals = as.matrix(newx[, .SD, .SDcols=names(newx) %like% "_clinical$"])
@@ -320,7 +324,6 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
       
       # Calculate predictions for the selected predict type.
       which_lambda = which(self$model$best_lambda==self$model$glmnet$lambda)
-      print(which_lambda)
       fit = survival::survfit(self$model$glmnet,
                               s=self$model$best_lambda,
                               x=self$model$x,
