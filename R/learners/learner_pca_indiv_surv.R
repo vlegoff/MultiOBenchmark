@@ -83,7 +83,7 @@ LearnerSurvPCAI = R6Class("LearnerSurvPCAI",
       latent_space = as.matrix(latent_space)
       colnames(latent_space) = paste(
           rep(pars$blocks, each=private$pca_args$rankA),
-          rep(1:private$pca_args$rankA, private$pca_args$rankA),
+          rep(1:private$pca_args$nf, private$pca_args$nf),
           sep="."
       )
 
@@ -97,8 +97,8 @@ LearnerSurvPCAI = R6Class("LearnerSurvPCAI",
       latent_space_new = Reduce(cbind, lapply(pca, `[[`, "lisup"))
       latent_space_new = as.matrix(latent_space_new)
       colnames(latent_space_new) = paste(
-          rep(pars$blocks, each=private$pca_args$rankA),
-          rep(1:private$pca_args$rankA, private$pca_args$rankA),
+          rep(pars$blocks, each=private$pca_args$nf),
+          rep(1:private$pca_args$nf, private$pca_args$nf),
           sep="."
       )
 
