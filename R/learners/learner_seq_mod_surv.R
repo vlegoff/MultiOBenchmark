@@ -200,12 +200,6 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
         } else if (pars$CV_measure == "basic") {
           fit = predict(glmnet_train, newx=JDR_test$x)
           loglik_test = glmnet::coxnet.deviance(pred=fit, y=ytest)
-          #coef = coef(glmnet_train)
-          #loglik_test = vector(mode="numeric", length=length(lambdas))
-          #for (j in seq_along(lambdas)) {
-            #cox_helper_test = transform_cox_model(coef[, j], JDR_test$x, ytest)
-            #loglik_test[j] = cox_helper_test$loglik[2]
-          #}
           results[i, ] = loglik_test
 
         } else if (pars$CV_measure == "V&VH") {
@@ -215,14 +209,6 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
           pred_whole = predict(glmnet_train, newx=whole_x)
           loglik_whole = glmnet::coxnet.deviance(pred_whole,
               y=c(ytrain, ytest))
-          #loglik_whole = vector(mode="numeric", length=length(lambdas))
-          #loglik_train = vector(mode="numeric", length=length(lambdas))
-          #for (j in seq_along(lambdas)) {
-            #cox_helper_whole = transform_cox_model(coef[, j], whole_x, whole_y)
-            #cox_helper_train = transform_cox_model(coef[, j], JDR_train$x, ytrain)
-            #loglik_whole[j] = cox_helper_whole$loglik[2]
-            #loglik_train[j] = cox_helper_train$loglik[2]
-          #}
           fit = predict(glmnet_train, newx=JDR_train$x)
           loglik_train = glmnet::coxnet.deviance(pred=fit, y=ytrain)
           results[i, ] = loglik_whole - loglik_train
@@ -251,18 +237,13 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
       #results = Reduce(rbind, results)
 
       #select_best = ifelse(pars$CV_measure %in% c("cindex, auc"), # LA CONNERIE !
-      select_best = ifelse(pars$CV_measure %in% c("cindex", "auc", "C"),
-                           which.max,
-                           which.min)
+      select_best = if(pars$CV_measure %in% c("cindex", "auc", "C")) {
+          which.max
+      } else {
+          which.min
+      }
       if(pars$CV_measure=="linpred") {
         aggr_results = glmnet::coxnet.deviance(results, y=ysurv)
-        #aggr_results = aggr_results - 2*llsat
-        #aggr_results = vector(mode="numeric", length=length(lambdas))
-        #for (j in seq_along(lambdas)) {
-          #cox_helper = transform_cox_model(1, results[, j], ysurv)
-          #cox_helper = survival::coxph(ysurv ~ results[, j], init=1, iter.max=0)
-          #aggr_results[j] = -2*cox_helper$loglik[2]
-        #}
       } else if(pars$CV_measure=="basic" | pars$CV_measure=="V&VH" ) {
         #aggr_results = -2*apply(results, 2, sum)
         aggr_results = apply(results, 2, sum)
@@ -274,7 +255,7 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
       best_lambda = lambdas[select_best(aggr_results)]
 
       print(self$id)
-      if(self$id=="surv.sjive") {
+      if(self$id=="surv.sjive" | self$id=="surv.intnmf") {
           private$cols = NULL
       }
 

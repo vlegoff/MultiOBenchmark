@@ -155,17 +155,3 @@ if(!args$pegasus) {
 }
 
 saveRegistry(reg)
-
-#mlr3extralearners::create_learner(
-    #path="learners",
-    #classname="rgcca",
-    #type="surv",
-    #key="rgcca",
-    #algorithm="RGCCA for dimension reduction followed by glmnet for surv prediction",
-    #package=c("RGCCA"),
-    #caller=c("RGCCA"),
-    #feature_types=c("integer", "numeric", "factor"),
-    #predict_types=c("crank", "lp", "distr"),
-    #properties=c("weights"),
-    #label="Regularized Generalized Canonical Correlation Analysis for Survival"
-#)
