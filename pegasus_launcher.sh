@@ -8,7 +8,4 @@
 #SBATCH -e logs/job.%j.err
 
 Rscript R/bench_experiment.R -r ${1} -b batchtools_interactive.conf.R \
-    -N 1 -s 1234 --pegasus --resubmit_not_finished
-
-#srun -n $((SLURM_NTASKS)) -c 1 \
-    #pegasus-mpi-cluster -m 1 registries/${1}/pegasus/tasks.dag
+    -N 4 -s 1234 --pegasus --resubmit_not_finished
