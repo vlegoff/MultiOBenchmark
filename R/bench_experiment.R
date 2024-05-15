@@ -24,9 +24,9 @@ parser$add_argument("-N", "--Ncpus", default=1,
 parser$add_argument("-s", "--seed", default=1234,
     help="seed used to create resampling folds [default %(default)s]")
 parser$add_argument("--resubmit_errors", action="store_true",
-    help="")
+    help="jobs that ended in errors are resubmitted")
 parser$add_argument("--resubmit_not_finished", action="store_true",
-    help="")
+    help="jobs that have not finished are resubmitted. WARNING: this may resubmit jobs that are still running and I don't know what happens in this case.")
 parser$add_argument("--pegasus", action="store_true",
     help="")
 
