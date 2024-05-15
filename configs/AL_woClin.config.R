@@ -1,11 +1,8 @@
-#.libPaths(.libPaths()[[2]])
-.libPaths("/env/export/v_home/q_unix/vlegoff/.local/lib/R/x86_64-el7-linux-gnu-library/4.1") # to ensure use of local libs
-
 suppressMessages({
     library(mlr3verse)
     library(mlr3proba)
     library(mlr3extralearners)
-    library(mlr3tuning)
+    #library(mlr3tuning)
     library(mlr3misc)
     library(data.table)
 })
@@ -19,6 +16,10 @@ source("R/learners/glmboost_surv_learner.R")
 datasets <- c("BLCA", "BRCA", "COAD", "ESCA", "HNSC", "KIRC", "KIRP", "LAML",
               "LGG", "LIHC", "LUAD", "LUSC", "OV", "PAAD", "SARC", "SKCM",
               "STAD", "UCEC")
+
+cv = rsmp("custom")
+folds = readRDS("folds.rds")
+paired_cv = TRUE
 
 learners <- list(
     GraphLearner$new(
@@ -76,6 +77,9 @@ learners <- list(
 #resample(task, test_lrn, cv2)
 
 resources = list(
+    "pegasus" = list(
+        walltime=60*60*24, ntasks=25, memory=10000, logs="logs/"
+    ),
     "ranger"=list(
         walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
     ),
@@ -95,7 +99,8 @@ resources = list(
 
 measures = list(
     msr("surv.cindex", weight_meth="G2"), # uno C
-    msr("surv.graf"), # ibrier
+    msr("surv.graf", id="graf_default"),
+    msr("surv.graf", p_max=0.1), # ibrier
     msr("surv.rcll"),
     msr("surv.dcalib"),
     msr("time_train"),

@@ -5,7 +5,12 @@ suppressMessages({
     library(data.table)
 })
 
-datasets <- c("BLCA", "BRCA")
+datasets <- c("BLCA", "BRCA", "COAD", "ESCA", "HNSC", "KIRC", "KIRP", "LAML",
+              "LGG", "LIHC", "LUAD", "LUSC", "OV", "PAAD", "SARC", "SKCM",
+              "STAD", "UCEC")
+cv = rsmp("custom")
+folds = readRDS("folds.rds")
+paired_cv = TRUE
 
 learners <- list(
     lrn("surv.kaplan", id="kaplan"),

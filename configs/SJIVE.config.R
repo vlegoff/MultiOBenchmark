@@ -9,7 +9,11 @@ datasets <- c("BLCA", "BRCA", "COAD", "ESCA", "HNSC", "KIRC", "KIRP", "LAML",
               "LGG", "LIHC", "LUAD", "LUSC", "OV", "PAAD", "SARC", "SKCM",
               "STAD", "UCEC")
 
-source("R/learners/sJIVE_surv_learner.R")
+cv = rsmp("custom")
+folds = readRDS("folds.rds")
+paired_cv = TRUE
+
+source("R/learners/learner_sjive_surv.R")
 
 blocks = c("cnv", "mirna", "mutation", "rna")
 internal_seed = 123
@@ -21,205 +25,101 @@ learners <- list(
         blocks=blocks,
         rankJ=1,
         rankA=1,
-        eta=0.2,
+        eta=0.5,
         clinical_fav=TRUE,
+        CV_measure="V&VH",
         seed=internal_seed,
-        id="sjive_clin_fav_j1_a1_eta0.2"
-    ), 
-    lrn(
-        "surv.sjive",
-        blocks=blocks,
-        rankJ=1,
-        rankA=1,
-        eta=0.8,
-        clinical_fav=TRUE,
-        seed=internal_seed,
-        id="sjive_clin_fav_j1_a1_eta0.8"
+        id="sjive_clin_fav_j1_a1_eta0.5"
     ), 
     lrn(
         "surv.sjive",
         blocks=blocks,
         rankJ=3,
         rankA=1,
-        eta=0.2,
+        eta=0.5,
         clinical_fav=TRUE,
+        CV_measure="V&VH",
         seed=internal_seed,
-        id="sjive_clin_fav_j3_a1_eta0.2"
-    ), 
-    lrn(
-        "surv.sjive",
-        blocks=blocks,
-        rankJ=3,
-        rankA=1,
-        eta=0.8,
-        clinical_fav=TRUE,
-        seed=internal_seed,
-        id="sjive_clin_fav_j3_a1_eta0.8"
+        id="sjive_clin_fav_j3_a1_eta0.5"
     ), 
     lrn(
         "surv.sjive",
         blocks=blocks,
         rankJ=1,
         rankA=3,
-        eta=0.2,
+        eta=0.5,
         clinical_fav=TRUE,
+        CV_measure="V&VH",
         seed=internal_seed,
-        id="sjive_clin_fav_j1_a3_eta0.2"
-    ), 
-    lrn(
-        "surv.sjive",
-        blocks=blocks,
-        rankJ=1,
-        rankA=3,
-        eta=0.8,
-        clinical_fav=TRUE,
-        seed=internal_seed,
-        id="sjive_clin_fav_j1_a3_eta0.8"
+        id="sjive_clin_fav_j1_a3_eta0.5"
     ), 
     lrn(
         "surv.sjive",
         blocks=blocks,
         rankJ=3,
         rankA=3,
-        eta=0.2,
+        eta=0.5,
         clinical_fav=TRUE,
+        CV_measure="V&VH",
         seed=internal_seed,
-        id="sjive_clin_fav_j3_a3_eta0.2"
-    ), 
-    lrn(
-        "surv.sjive",
-        blocks=blocks,
-        rankJ=3,
-        rankA=1,
-        eta=0.8,
-        clinical_fav=TRUE,
-        seed=internal_seed,
-        id="sjive_clin_fav_j3_a3_eta0.8"
+        id="sjive_clin_fav_j3_a3_eta0.5"
     ), 
     lrn(
         "surv.sjive",
         blocks=blocks,
         rankJ=0,
         rankA=1,
-        eta=0.2,
+        eta=0.5,
         clinical_fav=TRUE,
+        CV_measure="V&VH",
         seed=internal_seed,
-        id="sjive_clin_fav_j0_a1_eta0.2"
-    ), 
-    lrn(
-        "surv.sjive",
-        blocks=blocks,
-        rankJ=0,
-        rankA=1,
-        eta=0.8,
-        clinical_fav=TRUE,
-        seed=internal_seed,
-        id="sjive_clin_fav_j0_a1_eta0.8"
+        id="sjive_clin_fav_j0_a1_eta0.5"
     ), 
     lrn(
         "surv.sjive",
         blocks=blocks,
         rankJ=0,
         rankA=3,
-        eta=0.2,
+        eta=0.5,
         clinical_fav=TRUE,
+        CV_measure="V&VH",
         seed=internal_seed,
-        id="sjive_clin_fav_j0_a3_eta0.2"
-    ), 
-    lrn(
-        "surv.sjive",
-        blocks=blocks,
-        rankJ=0,
-        rankA=3,
-        eta=0.8,
-        clinical_fav=TRUE,
-        seed=internal_seed,
-        id="sjive_clin_fav_j0_a3_eta0.8"
+        id="sjive_clin_fav_j0_a3_eta0.5"
     ), 
     lrn(
         "surv.sjive",
         blocks=blocks,
         rankJ=1,
         rankA=0,
-        eta=0.2,
+        eta=0.5,
         clinical_fav=TRUE,
+        CV_measure="V&VH",
         seed=internal_seed,
-        id="sjive_clin_fav_j1_a0_eta0.2"
-    ), 
-    lrn(
-        "surv.sjive",
-        blocks=blocks,
-        rankJ=1,
-        rankA=0,
-        eta=0.8,
-        clinical_fav=TRUE,
-        seed=internal_seed,
-        id="sjive_clin_fav_j1_a0_eta0.8"
+        id="sjive_clin_fav_j1_a0_eta0.5"
     ), 
     lrn(
         "surv.sjive",
         blocks=blocks,
         rankJ=3,
         rankA=0,
-        eta=0.2,
+        eta=0.5,
         clinical_fav=TRUE,
+        CV_measure="V&VH",
         seed=internal_seed,
-        id="sjive_clin_fav_j3_a0_eta0.2"
-    ), 
-    lrn(
-        "surv.sjive",
-        blocks=blocks,
-        rankJ=3,
-        rankA=0,
-        eta=0.8,
-        clinical_fav=TRUE,
-        seed=internal_seed,
-        id="sjive_clin_fav_j3_a0_eta0.8"
+        id="sjive_clin_fav_j3_a0_eta0.5"
     ) 
 )
 
 resources = list(
-    "sjive_clin_fav_j1_a1_eta0.2"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=50
-    )
-    "sjive_clin_fav_j1_a1_eta0.8"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=50
-    )
-    "sjive_clin_fav_j3_a1_eta0.2"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=50
-    )
-    "sjive_clin_fav_j3_a1_eta0.8"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=50
-    )
-    "sjive_clin_fav_j1_a3_eta0.2"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=50
-    )
-    "sjive_clin_fav_j1_a3_eta0.8"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=50
-    )
-    "sjive_clin_fav_j3_a3_eta0.2"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=50
-    )
-    "sjive_clin_fav_j3_a3_eta0.8"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=50
-    )
-    "sjive_clin_fav_j0_a1_eta0.2"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=450
-    )
-    "sjive_clin_fav_j0_a1_eta0.8"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=450
-    )
-    "sjive_clin_fav_j0_a3_eta0.2"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=450
-    )
-    "sjive_clin_fav_j0_a3_eta0.8"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=450
+    "pegasus" = list(
+        walltime=60*60*24, ntasks=21, memory=10000, logs="logs/"
     )
 )
 
 measures = list(
     msr("surv.cindex", weight_meth="G2"), # uno C
-    msr("surv.graf"), # ibrier
+    msr("surv.graf", id="graf_default"),
+    msr("surv.graf", p_max=0.1), # ibrier
     msr("time_train"),
     msr("time_predict"),
     msr("time_both")

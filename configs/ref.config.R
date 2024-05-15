@@ -9,6 +9,10 @@ datasets <- c("BLCA", "BRCA", "COAD", "ESCA", "HNSC", "KIRC", "KIRP", "LAML",
               "LGG", "LIHC", "LUAD", "LUSC", "OV", "PAAD", "SARC", "SKCM",
               "STAD", "UCEC")
 
+cv = rsmp("custom")
+folds = readRDS("folds.rds")
+paired_cv = TRUE
+
 learners <- list(
     lrn("surv.kaplan", id="kaplan"),
     GraphLearner$new(
@@ -24,6 +28,9 @@ learners <- list(
 )
 
 resources = list(
+    "pegasus"=list(
+        walltime=60*60*4, ntasks=51, memory=10000, logs="logs/"
+    ),
     "kaplan"=list(
         walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=100
     ),
@@ -37,7 +44,8 @@ resources = list(
 
 measures = list(
     msr("surv.cindex", weight_meth="G2"), # uno C
-    msr("surv.graf"), # ibrier
+    msr("surv.graf", id="graf_default"),
+    msr("surv.graf", p_max=0.1), # ibrier
     msr("surv.rcll"),
     msr("surv.dcalib"),
     msr("time_train"),

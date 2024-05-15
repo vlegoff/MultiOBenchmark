@@ -2,7 +2,7 @@ suppressMessages({
     library(mlr3verse)
     library(mlr3proba)
     library(mlr3extralearners)
-    library(mlr3tuning)
+    #library(mlr3tuning)
     library(mlr3misc)
     library(data.table)
 })
@@ -17,21 +17,25 @@ datasets <- c("BLCA", "BRCA", "COAD", "ESCA", "HNSC", "KIRC", "KIRP", "LAML",
               "LGG", "LIHC", "LUAD", "LUSC", "OV", "PAAD", "SARC", "SKCM",
               "STAD", "UCEC")
 
+cv = rsmp("custom")
+folds = readRDS("folds.rds")
+paired_cv = TRUE
+
 learners <- list(
     lrn("surv.ranger", id="ranger", min.node.size=3),
     lrn("surv.cv_glmnet", id="lasso", alpha=1, s="lambda.min",
         type.measure="C"),
     #lrn("surv.cv_coxboost", id="coxboost", maxstepno=100),
     #lrn("surv.cv_coxboost_clin_fav", id="coxboost_clin_fav", maxstepno=100),
-    auto_tuner(
-        tuner=tnr("grid_search", resolution=100, batch_size=1),
-        learner=lrn(
-            "surv.glmboost",
-            mstop=to_tune(1, 100, logscale=FALSE)
-        ),
-        resampling=rsmp("cv", folds=5),
-        measure=msr("surv.cindex", weight_meth="G2")
-    ),
+    #auto_tuner(
+        #tuner=tnr("grid_search", resolution=1, batch_size=1),
+        #learner=lrn(
+            #"surv.glmboost",
+            #mstop=to_tune(1, 100, logscale=FALSE)
+        #),
+        #resampling=rsmp("cv", folds=5),
+        #measure=msr("surv.cindex", weight_meth="G2")
+    #),
     lrn(
         "surv.cv_prioritylasso",
         id="prioritylasso",
@@ -79,6 +83,9 @@ learners <- list(
 #resample(task, test_lrn, cv2)
 
 resources = list(
+    "pegasus" = list(
+        walltime=60*60*24, ntasks=100, memory=10000, logs="logs/"
+    ),
     "ranger"=list(
         walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=1
     ),
@@ -94,12 +101,12 @@ resources = list(
     #"surv.glmboost.tuned"=list(
         #walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=50
     #),
-    #"prioritylasso"=list(
-        #walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
-    #),
-    #"prioritylasso_clin_fav"=list(
-        #walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
-    #),
+    "prioritylasso"=list(
+        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
+    ),
+    "prioritylasso_clin_fav"=list(
+        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
+    ),
     "blockforest"=list(
         walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=1
     ),
@@ -110,7 +117,8 @@ resources = list(
 
 measures = list(
     msr("surv.cindex", weight_meth="G2"), # uno C
-    msr("surv.graf"), # ibrier
+    msr("surv.graf", id="graf_default"),
+    msr("surv.graf", p_max=0.1), # ibrier
     msr("surv.rcll"),
     msr("surv.dcalib"),
     msr("time_train"),

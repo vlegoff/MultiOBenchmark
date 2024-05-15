@@ -51,7 +51,8 @@ resources = list(
 
 measures = list(
     msr("surv.cindex", weight_meth="G2"), # uno C
-    msr("surv.graf"), # ibrier
+    msr("surv.graf", id="graf_default"),
+    msr("surv.graf", p_max=0.1), # ibrier
     msr("surv.rcll"),
     msr("surv.dcalib"),
     msr("time_train"),
