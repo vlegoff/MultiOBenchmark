@@ -141,9 +141,9 @@ LearnerSurvMOFA = R6Class("LearnerSurvMOFA",
             private$train_opts = private$train_opts[names(default_options)]
         }
 
-        print(MOFA2::get_default_data_options(MOFAobject))
-        print("***********")
-        print(private$data_opts)
+        #print(MOFA2::get_default_data_options(MOFAobject))
+        #print("***********")
+        #print(private$data_opts)
 
         MOFAobject = MOFA2::prepare_mofa(
             object=MOFAobject,
@@ -160,7 +160,7 @@ LearnerSurvMOFA = R6Class("LearnerSurvMOFA",
         #MOFAobject_trained = MOFA2::run_mofa(MOFAobject, use_basilisk=TRUE)
 
         latent_space = Reduce(rbind, MOFAobject_trained@expectations$Z)
-        print(latent_space)
+        #print(latent_space)
 
         return(list(x=latent_space, jdr=MOFAobject_trained))
     },
@@ -169,17 +169,20 @@ LearnerSurvMOFA = R6Class("LearnerSurvMOFA",
         #newx = lapply(newx, t)
         newx = Reduce(cbind, newx)
 
-        print(lapply(jdr@expectations$W, dim))
+        #print(lapply(jdr@expectations$W, dim))
         W = Reduce(cbind, lapply(jdr@expectations$W, t))
         #W = Reduce(rbind, jdr@expectations$W)
-        print(dim(newx))
-        print(dim(W))
-        lm1 = lm(t(newx) ~ t(W) - 1)
-        print(coef(lm1))
-        Z_new = t(as.matrix(coef(lm1)))
-        #Z_new = newx %*% W %*% MASS::ginv(W %*% t(W))
+        #print(dim(newx))
+        #print(dim(W))
+        #lm1 = lm(t(newx) ~ t(W) - 1)
+        #print(coef(lm1))
+        #Z_new = t(as.matrix(coef(lm1)))
+        #Z2_new = newx %*% t(W) %*% MASS::ginv(W %*% t(W)) 
+        Z2_new = newx %*% MASS::ginv(W) # fastest way
+        #print(dim(Z2_new))
+        #print(Z_new - Z2_new)
 
-        return(list(x=Z_new))
+        return(list(x=Z2_new))
     }
 
   )

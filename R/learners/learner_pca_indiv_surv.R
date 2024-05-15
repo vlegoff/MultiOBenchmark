@@ -82,7 +82,7 @@ LearnerSurvPCAI = R6Class("LearnerSurvPCAI",
       latent_space = Reduce(cbind, lapply(pca, `[[`, "li"))
       latent_space = as.matrix(latent_space)
       colnames(latent_space) = paste(
-          rep(pars$blocks, each=private$pca_args$rankA),
+          rep(pars$blocks, each=private$pca_args$nf),
           rep(1:private$pca_args$nf, private$pca_args$nf),
           sep="."
       )

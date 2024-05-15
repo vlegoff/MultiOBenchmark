@@ -67,7 +67,6 @@ LearnerSurvRGCCA = R6Class("LearnerSurvRGCCA",
     rgcca_args = NULL,
 
     train_jdr = function(x, y, pars) {
-        
         if(is.null(private$rgcca_args)) {
             if(!pars$supervised) {
                 complete_matrix = matrix(1, length(pars$blocks),

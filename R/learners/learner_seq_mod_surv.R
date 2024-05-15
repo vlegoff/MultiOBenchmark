@@ -255,9 +255,9 @@ LearnerSeqMod = R6Class("LearnerSeqMod",
       best_lambda = lambdas[select_best(aggr_results)]
 
       print(self$id)
-      if(self$id=="surv.sjive" | self$id=="surv.intnmf") {
-          private$cols = NULL
-      }
+      #if(self$id=="surv.sjive" | self$id=="surv.intnmf") {
+          #private$cols = NULL
+      #}
 
       list(JDR=JDR$jdr,
            glmnet=glmnet_fit,
