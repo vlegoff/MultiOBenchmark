@@ -1,7 +1,7 @@
 for q in normal xlarge xxlarge; do
 
 echo "========================================================================"
-echo "$q queue"
+echo "$q"
 echo "========================================================================"
 
 cputot=$(ccc_mpinfo \
@@ -20,7 +20,7 @@ if [ -z $EXP ]; then
 fi
 ncpus=$(echo $EXP | bc)
 percent=$(echo "scale=1; 100 * $ncpus / $cputot" | bc -l)
-echo "User $USER, you are using $ncpus cpus on $q queue." \
+echo "User $USER, you are using $ncpus cpus on $q." \
     "That is $percent % of $cputot total cpus"
 
 EXP=$(ccc_mpp -u $USER -p -q $q \
@@ -44,7 +44,7 @@ if [ -z $EXP ]; then
 fi
 ncpus=$(echo $EXP | bc)
 percent=$(echo "scale=1; 100 * $ncpus / $cputot" | bc -l)
-echo "$ncpus cpus are used on $q queue." \
+echo "$ncpus cpus are used on $q." \
     "That is $percent % of $cputot total cpus"
 
 EXP=$(ccc_mpp -p -q $q \
@@ -57,7 +57,7 @@ if [ -z $EXP ]; then
 fi
 ncpus=$(echo $EXP | bc)
 percent=$(echo "scale=1; 100 * $ncpus / $cputot" | bc -l)
-echo "$ncpus cpus are pending on normal $q."
+echo "$ncpus cpus are pending on $q."
 
 echo "  "
 
