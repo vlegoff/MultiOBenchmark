@@ -33,7 +33,7 @@ learners <- list(
 
 resources = list(
     "pegasus" = list(
-        walltime=60*60*24, ntasks=200, memory=10000, logs="logs/"
+        walltime=60*60*24, ntasks=172, memory=10000, logs="logs/"
     )
 )
 
