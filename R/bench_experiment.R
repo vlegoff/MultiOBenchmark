@@ -21,14 +21,14 @@ parser$add_argument("-d", "--data", nargs=1,
     to run the learners", required=TRUE)
 # resources should not be mandatory, but will do for now
 parser$add_argument("-c", "--resources", nargs=1,
-    help="resources with which to launch the benchmark", required=TRUE)
+    help="resources with which to launch the benchmark", required=FALSE)
 parser$add_argument("-r", "--registry", nargs=1,
     help="path to the batchtools registry to use.
     Will be created if it does not exists", required=TRUE)
 # same as for resources
 parser$add_argument("-b", "--batchconf",
-    help="path to batchtools configuration file", required=TRUE)
-parser$add_argument("-N", "--Ncpus", default=1,
+    help="path to batchtools configuration file", required=FALSE)
+parser$add_argument("-N", "--Ncpus", default=1L, type="integer", choices=1:36,
     help="number of cpu to use [default %(default)s]")
 parser$add_argument("-s", "--seed", default=1234,
     help="seed used to create resampling folds [default %(default)s]")
@@ -55,18 +55,37 @@ registry_dir = args$registry
 #sourcing config files
 source(args$learners)
 source(args$data)
-source(args$resources)
 
 # Loading batchtools registry
+# make batchconf 
 if (dir.exists(registry_dir)) {
     reg <- loadRegistry(registry_dir, writeable=T)
-    source(args$batchconf)
-    reg$cluster.functions = cluster.functions
-    reg$packages = packages
+    if (!is.null(args$batchconf)) {
+        source(args$batchconf)
+        reg$cluster.functions = cluster.functions
+        reg$packages = packages
+    } else {
+        reg$packages = c("mlr3", "mlr3proba", "data.table")
+    }
 } else {
-    reg <- makeExperimentRegistry(registry_dir, conf.file=args$batchconf)
+    if (!is.null(args$batchconf)) {
+        reg <- makeExperimentRegistry(registry_dir, conf.file=args$batchconf)
+    } else {
+        reg <- makeExperimentRegistry(registry_dir)
+        print(args$Ncpus)
+        if (args$Ncpus > 1) {
+            reg$cluster.functions = makeClusterFunctionsMulticore(args$Ncpus)
+        }
+        reg$packages = c("mlr3", "mlr3proba", "data.table")
+    }
 }
 reg$work.dir <- getwd()
+
+if (!reg$cluster.functions$name %in% c("Interactive", "Multicore")
+    & is.null(args$resources)) {
+    stop(paste0("Must provide a resource file with cluster functions ", 
+        cluster.functions$name))
+}
 
 names(learners) = sapply(learners, `[[`, "id")
 
@@ -163,6 +182,7 @@ if(!args$pegasus &
 
 } else if (!args$pegasus) {
 
+    source(args$resources)
     resources = resources[names(resources)!="pegasus"]
     lapply(names(resources),
         function(l) submitLrn(l,
@@ -173,6 +193,7 @@ if(!args$pegasus &
 
 } else { #bypassing batchtools and creating pegasus DAG
 
+    source(args$resources)
     pegasus_dir = paste0(reg$file.dir, "/pegasus")
     if (dir.exists(pegasus_dir)) {
         unlink(pegasus_dir, recursive=TRUE)
