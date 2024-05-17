@@ -7,5 +7,9 @@
 #SBATCH -o logs/job.%j.out
 #SBATCH -e logs/job.%j.err
 
-Rscript R/extract_results.R -r ${1} -N $SLURM_JOB_CPUS_PER_NODE \
-    -C 100 -d results
+Rscript R/extract_results.R \
+    -r registries/${1} \
+    -d results/${1}
+    -m measures.conf.R \
+    -N $SLURM_JOB_CPUS_PER_NODE \
+    -C 100
