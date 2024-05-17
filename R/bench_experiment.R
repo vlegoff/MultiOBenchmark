@@ -1,10 +1,10 @@
 suppressMessages({
+    library(data.table)
+    library(batchtools)
     library(mlr3verse)
     library(mlr3proba)
     library(mlr3batchmark)
     library(mlr3extralearners)
-    library(batchtools)
-    library(data.table)
     library(argparse)
     library(parallel)
     source("R/misc/bench_misc.R")
@@ -14,11 +14,20 @@ options(batchtools.progress=FALSE)
 
 parser = ArgumentParser()
 
+parser$add_argument("-l", "--learners", nargs=1,
+    help="config file containing the learners to run", required=TRUE)
+parser$add_argument("-d", "--data", nargs=1,
+    help="config file containing the description of the datasets on which
+    to run the learners", required=TRUE)
+# resources should not be mandatory, but will do for now
+parser$add_argument("-c", "--resources", nargs=1,
+    help="resources with which to launch the benchmark", required=TRUE)
 parser$add_argument("-r", "--registry", nargs=1,
-    help="Name of registry to use. Will be create if nonexistent. A
-    corresponding config file must already exist")
+    help="path to the batchtools registry to use.
+    Will be created if it does not exists", required=TRUE)
+# same as for resources
 parser$add_argument("-b", "--batchconf",
-    help="path to batchtools configuration file")
+    help="path to batchtools configuration file", required=TRUE)
 parser$add_argument("-N", "--Ncpus", default=1,
     help="number of cpu to use [default %(default)s]")
 parser$add_argument("-s", "--seed", default=1234,
@@ -26,20 +35,27 @@ parser$add_argument("-s", "--seed", default=1234,
 parser$add_argument("--resubmit_errors", action="store_true",
     help="jobs that ended in errors are resubmitted")
 parser$add_argument("--resubmit_not_finished", action="store_true",
-    help="jobs that have not finished are resubmitted. WARNING: this may resubmit jobs that are still running and I don't know what happens in this case.")
+    help="jobs that have not finished are resubmitted.
+    WARNING: this may resubmit jobs that are still running 
+    and I don't know what happens in this case.")
 parser$add_argument("--pegasus", action="store_true",
     help="")
+
+# when no resources/no batchtools, just launch with interactive mode
 
 args = parser$parse_args()
 
 set.seed(args$seed)
 
-#ncpus = as.numeric(Sys.getenv("SLURM_JOB_CPUS_PER_NODE"))
-#ncpus = if (is.na(ncpus)) parallelly::availableCores() else ncpus
 data.table::setDTthreads(args$Ncpus)
 
-registry_dir = paste0("registries/", args$registry)
-config_file = paste0("configs/", args$registry, ".config.R")
+registry_dir = args$registry
+#config_file = paste0("configs/", args$registry, ".config.R")
+
+#sourcing config files
+source(args$learners)
+source(args$data)
+source(args$resources)
 
 # Loading batchtools registry
 if (dir.exists(registry_dir)) {
@@ -52,25 +68,65 @@ if (dir.exists(registry_dir)) {
 }
 reg$work.dir <- getwd()
 
-source(config_file)
-
 names(learners) = sapply(learners, `[[`, "id")
 
 # load datasets
-dats <- lapply(paste0("data/", datasets, ".csv"), fread)
-names(dats) <- datasets
+for (d in names(datasets)) {
+    if (!all(c("target", "path") %in% names(datasets[[d]]))) {
+        stop(paste0("dataset ", d, " lacks either target or path"))
+    }
+    datasets[[d]]$x = fread(datasets[[d]]$path)
+    if (!all(targets %in% colnames(datasets[[d]]$x))) {
+        stop(paste0("targets", paste(targets), "are not in dataset ", d))
+    }
+}
+
+task_functions = list(
+    survival=as_task_surv,
+    regression=as_task_regr,
+    classification=as_task_classif
+)
+
+if (task_type %in% names(task_functions)) {
+    create_task = task_functions[[task_type]]
+} else if (task_type %in% c("density", "clustering")) {
+    stop(paste0("task type ", task_type, " not yet implemented"))
+} else {
+    stop(paste0("task type ", task_type, " not recognized"))
+}
 
 # Defining the tasks
-tasks <- mclapply(datasets,
-    function(x) {
-        tsk <- as_task_surv(dats[[x]],
-            event="status", time="time",
-            type="right", id=x)
-        tsk$add_strata("status")
+# check that all targets are in the dataset outside of mclapply?
+tasks <- mclapply(names(datasets),
+    function(d) {
+        parms = if (task_type == "survival") {
+            list(
+                x=datasets[[d]]$x,
+                time=datasets[[d]]$target[1],
+                event=datasets[[d]]$target[2],
+                type="right",
+                id=d
+            )
+        } else if (task_type=="regression" | task_type=="classification") {
+            list(
+                x=datasets[[d]]$x,
+                target=datasets[[d]]$target,
+                id=d
+            )
+        } else {
+            stop("wtf!")
+        }
+        #tsk <- as_task_surv(dats[[x]],
+            #event="status", time="time",
+            #type="right", id=x)
+        tsk = mlr3misc::invoke(create_task, .args=parms)
+        for (s in datasets[[d]]$strata) {
+            tsk$add_strata(s)
+        }
         tsk
     },
     mc.cores=args$Ncpus)
-names(tasks) <- datasets
+names(tasks) <- names(datasets)
 
 paired_cv = ifelse(!exists("paired_cv"), F, paired_cv)
 store_models = ifelse(!exists("store_models"), F, store_models)
@@ -95,7 +151,7 @@ if(!exists("cv")) {
 design <- benchmark_grid(tasks, learners, cv, paired=paired_cv)
 batchmark(design, store_models=store_models, reg=reg)
 
-if(!args$pegasus) {
+if(!args$pegasus) { #submitting jobs through batchtools
     resources = resources[names(resources)!="pegasus"]
     lapply(names(resources),
         function(l) submitLrn(l,
@@ -103,13 +159,14 @@ if(!args$pegasus) {
             resources=resources[[l]],
             resubmit_errors=args$resubmit_errors,
             resubmit_not_finished=args$resubmit_not_finished))
-} else {
+} else { #bypassing batchtools and creating pegasus DAG
     pegasus_dir = paste0(reg$file.dir, "/pegasus")
     if (dir.exists(pegasus_dir)) {
         unlink(pegasus_dir, recursive=TRUE)
     }
     dir.create(pegasus_dir)
 
+    # getting jobs to run
     ids = findNotSubmitted()
     err =  findErrors()
     not_finished = findNotDone()[
@@ -122,6 +179,7 @@ if(!args$pegasus) {
         stop("nothing to run")
     }
 
+    #manually creating batchtools rds and pegasus DAG to run them
     dag = vector("character", nrow(jobs))
     for (i in 1:nrow(jobs)) {
         collection = makeJobCollection(jobs[i, job.id])
@@ -140,6 +198,7 @@ if(!args$pegasus) {
     writeLines(dag, fileConn)
     close(fileConn)
 
+    #creating shell script to run pegasus with asked resources
     brew_env = new.env()
     brew_env$resources = resources[["pegasus"]]
     brew_env$job = list(
@@ -150,6 +209,7 @@ if(!args$pegasus) {
         output=paste0(pegasus_dir, "/launcher.sh"),
         envir=brew_env)
 
+    #Running pegasus, specific to INTI, maybe works at TGCC
     system("module load pegasus")
     system(paste0("ccc_msub ", pegasus_dir, "/launcher.sh"))
 }
