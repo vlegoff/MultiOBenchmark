@@ -9,7 +9,7 @@
 
 Rscript R/extract_results.R \
     -r registries/${1} \
-    -d results/${1}
+    -d results/${1} \
     -m measures.conf.R \
     -N $SLURM_JOB_CPUS_PER_NODE \
     -C 100
