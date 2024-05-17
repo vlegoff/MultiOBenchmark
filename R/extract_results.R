@@ -14,6 +14,8 @@ parser = ArgumentParser()
 
 parser$add_argument("-r", "--registry", nargs=1,
     help="Name of registry to extract results from. The registry must exist")
+parser$add_argument("-m", "--measures", nargs=1,
+    help="")
 parser$add_argument("-N", "--Ncpus", default=1,
     help="number of cpu to use [default %(default)s]")
 parser$add_argument("-C", "--chunk_size", default=100L, type="integer",
@@ -31,9 +33,14 @@ args = parser$parse_args()
 # Setting variables for cluster
 data.table::setDTthreads(args$Ncpus)
 
-registry_dir = paste0("registries/", args$registry)
-config_file = paste0("configs/", args$registry, ".config.R")
-res_dir = paste0(args$directory, "/", args$registry)
+#registry_dir = paste0("registries/", args$registry)
+registry_dir = args$registry
+#config_file = paste0("configs/", args$registry, ".config.R")
+
+source(args$measures)
+
+#res_dir = paste0(args$directory, "/", args$registry)
+res_dir = args$directory
 if (!dir.exists(res_dir)) dir.create(res_dir)
 
 # Loading batchtools registry
