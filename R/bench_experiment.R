@@ -76,7 +76,7 @@ for (d in names(datasets)) {
         stop(paste0("dataset ", d, " lacks either target or path"))
     }
     datasets[[d]]$x = fread(datasets[[d]]$path)
-    if (!all(targets %in% colnames(datasets[[d]]$x))) {
+    if (!all(datasets[[d]]$target %in% colnames(datasets[[d]]$x))) {
         stop(paste0("targets", paste(targets), "are not in dataset ", d))
     }
 }
@@ -116,9 +116,6 @@ tasks <- mclapply(names(datasets),
         } else {
             stop("wtf!")
         }
-        #tsk <- as_task_surv(dats[[x]],
-            #event="status", time="time",
-            #type="right", id=x)
         tsk = mlr3misc::invoke(create_task, .args=parms)
         for (s in datasets[[d]]$strata) {
             tsk$add_strata(s)
@@ -151,7 +148,21 @@ if(!exists("cv")) {
 design <- benchmark_grid(tasks, learners, cv, paired=paired_cv)
 batchmark(design, store_models=store_models, reg=reg)
 
-if(!args$pegasus) { #submitting jobs through batchtools
+# Submitting jobs either through batchtools or pegasus
+if(!args$pegasus &
+    reg$cluster.functions$name %in% c("Interactive", "Multicore")) { 
+
+    ids = findNotSubmitted()
+    err =  findErrors()
+    not_finished = findNotDone()[
+        !(job.id %in% ids$job.id | job.id %in% err$job.id)
+    ]
+    if (args$resubmit_errors) ids = rbind(ids, err)
+    if (args$resubmit_not_finished) ids = rbind(ids, not_finished)
+    submitJobs(ids=ids, reg=reg)
+
+} else if (!args$pegasus) {
+
     resources = resources[names(resources)!="pegasus"]
     lapply(names(resources),
         function(l) submitLrn(l,
@@ -159,7 +170,9 @@ if(!args$pegasus) { #submitting jobs through batchtools
             resources=resources[[l]],
             resubmit_errors=args$resubmit_errors,
             resubmit_not_finished=args$resubmit_not_finished))
+
 } else { #bypassing batchtools and creating pegasus DAG
+
     pegasus_dir = paste0(reg$file.dir, "/pegasus")
     if (dir.exists(pegasus_dir)) {
         unlink(pegasus_dir, recursive=TRUE)
@@ -212,6 +225,7 @@ if(!args$pegasus) { #submitting jobs through batchtools
     #Running pegasus, specific to INTI, maybe works at TGCC
     system("module load pegasus")
     system(paste0("ccc_msub ", pegasus_dir, "/launcher.sh"))
+
 }
 
 saveRegistry(reg)
