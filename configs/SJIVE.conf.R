@@ -1,0 +1,114 @@
+suppressMessages({
+    library(mlr3verse)
+    library(mlr3proba)
+    library(mlr3extralearners)
+    library(data.table)
+    library(survjdr)
+})
+
+cv = rsmp("custom")
+folds = readRDS("folds.rds")
+paired_cv = TRUE
+
+blocks = c("cnv", "mirna", "mutation", "rna")
+internal_seed = 123
+
+# rankJ = 0 or rankA=0 not working due to jive.predict
+learners <- list(
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=1,
+        rankA=1,
+        eta=0.5,
+        clinical_fav=TRUE,
+        CV_measure="V&VH",
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_clin_fav_j1_a1_eta0.5"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=3,
+        rankA=1,
+        eta=0.5,
+        clinical_fav=TRUE,
+        CV_measure="V&VH",
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_clin_fav_j3_a1_eta0.5"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=1,
+        rankA=3,
+        eta=0.5,
+        clinical_fav=TRUE,
+        CV_measure="V&VH",
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_clin_fav_j1_a3_eta0.5"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=3,
+        rankA=3,
+        eta=0.5,
+        clinical_fav=TRUE,
+        CV_measure="V&VH",
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_clin_fav_j3_a3_eta0.5"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=0,
+        rankA=1,
+        eta=0.5,
+        clinical_fav=TRUE,
+        CV_measure="V&VH",
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_clin_fav_j0_a1_eta0.5"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=0,
+        rankA=3,
+        eta=0.5,
+        clinical_fav=TRUE,
+        CV_measure="V&VH",
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_clin_fav_j0_a3_eta0.5"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=1,
+        rankA=0,
+        eta=0.5,
+        clinical_fav=TRUE,
+        CV_measure="V&VH",
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_clin_fav_j1_a0_eta0.5"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=3,
+        rankA=0,
+        eta=0.5,
+        clinical_fav=TRUE,
+        CV_measure="V&VH",
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_clin_fav_j3_a0_eta0.5"
+    ) 
+)
