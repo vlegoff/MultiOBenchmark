@@ -15,27 +15,30 @@ learners <- list(
         "surv.intnmf",
         blocks=blocks,
         k=2,
+        weights="frob",
         clinical_fav=FALSE,
         CV_measure="V&VH",
         seed=internal_seed,
-        id="intnmf_clin_fav_k2"
+        id="intnmf_k2_frob"
     ), 
     lrn(
         "surv.intnmf",
         blocks=blocks,
         k=3,
+        weights="frob",
         clinical_fav=FALSE,
         CV_measure="V&VH",
         seed=internal_seed,
-        id="intnmf_clin_fav_k2"
+        id="intnmf_k3_frob"
     ), 
     lrn(
         "surv.intnmf",
         blocks=blocks,
         k=5,
+        weights="frob",
         clinical_fav=FALSE,
         CV_measure="V&VH",
         seed=internal_seed,
-        id="intnmf_clin_fav_k2"
+        id="intnmf_k5_frob"
     ) 
 )
