@@ -40,6 +40,8 @@ parser$add_argument("--resubmit_not_finished", action="store_true",
     and I don't know what happens in this case.")
 parser$add_argument("--pegasus", action="store_true",
     help="")
+parser$add_argument("--skip_batchmark", action="store_true",
+    help="")
 
 # when no resources/no batchtools, just launch with interactive mode
 
@@ -96,7 +98,9 @@ for (d in names(datasets)) {
     }
     datasets[[d]]$x = fread(datasets[[d]]$path)
     if (!all(datasets[[d]]$target %in% colnames(datasets[[d]]$x))) {
-        stop(paste0("targets", paste(targets), "are not in dataset ", d))
+        stop(paste0("targets ",
+                paste(datasets[[d]]$target, collapse=" "), 
+                " are not in dataset ", d))
     }
 }
 
@@ -155,8 +159,9 @@ if(!exists("cv")) {
     if(!exists("folds")) stop("cv is custom but no folds are provided")
     if(!length(folds)==length(datasets)) stop("wrong number of resamplings")
     cv = vector("list", length=length(tasks)) 
-    for(i in seq_along(datasets)) {
-        d = datasets[i]
+    for(i in seq_along(tasks)) {
+        #d = datasets[i]
+        d = names(tasks)[i]
         cv[[i]] = rsmp("custom")$instantiate(tasks[[d]],
             train=folds[[d]]$train, test=folds[[d]]$test)
     }
@@ -164,8 +169,10 @@ if(!exists("cv")) {
     cv = cv
 }
 
-design <- benchmark_grid(tasks, learners, cv, paired=paired_cv)
-batchmark(design, store_models=store_models, reg=reg)
+if (!args$skip_batchmark) {
+    design <- benchmark_grid(tasks, learners, cv, paired=paired_cv)
+    batchmark(design, store_models=store_models, reg=reg)
+}
 
 # Submitting jobs either through batchtools or pegasus
 if(!args$pegasus &
@@ -236,7 +243,7 @@ if(!args$pegasus &
     brew_env = new.env()
     brew_env$resources = resources[["pegasus"]]
     brew_env$job = list(
-        registry=args$registry,
+        registry=basename(args$registry),
         dag=base::normalizePath(paste0(reg$file.dir, "/pegasus/tasks.dag"))
     )
     brew::brew(file="hpc_templates/pegasus.tmpl",
