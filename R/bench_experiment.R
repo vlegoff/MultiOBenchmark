@@ -68,13 +68,17 @@ if (dir.exists(registry_dir)) {
         reg$packages = packages
     } else {
         reg$packages = c("mlr3", "mlr3proba", "data.table")
+        if (args$Ncpus > 1) {
+            reg$cluster.functions = makeClusterFunctionsMulticore(args$Ncpus)
+        } else {
+            reg$cluster.functions = makeClusterFunctionsInteractive()
+        }
     }
 } else {
     if (!is.null(args$batchconf)) {
         reg <- makeExperimentRegistry(registry_dir, conf.file=args$batchconf)
     } else {
         reg <- makeExperimentRegistry(registry_dir)
-        print(args$Ncpus)
         if (args$Ncpus > 1) {
             reg$cluster.functions = makeClusterFunctionsMulticore(args$Ncpus)
         }
