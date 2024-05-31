@@ -1,0 +1,61 @@
+suppressMessages({
+    library(mlr3verse)
+    library(mlr3proba)
+    library(mlr3extralearners)
+    library(data.table)
+    library(survjdr)
+})
+
+blocks = c("cnv", "mirna", "mutation", "rna")
+internal_seed = 123
+
+learners <- list(
+    lrn(
+        "surv.rgcca",
+        blocks=blocks,
+        tau=0.1,
+        clinical_fav=TRUE,
+        supervised=TRUE,
+        supervised_mode="clinical",
+        ncomp=1,
+        CV_measure="V&VH",
+        seed=internal_seed,
+        id="rgcca_sup_clin_fav_n1_tau0.1"
+    ), 
+    lrn(
+        "surv.rgcca",
+        blocks=blocks,
+        tau=1,
+        clinical_fav=TRUE,
+        supervised=TRUE,
+        supervised_mode="clinical",
+        ncomp=1,
+        CV_measure="V&VH",
+        seed=internal_seed,
+        id="rgcca_sup_clin_fav_n1_tau1"
+    ),
+    lrn(
+        "surv.rgcca",
+        blocks=blocks,
+        tau=0.1,
+        clinical_fav=TRUE,
+        supervised=TRUE,
+        supervised_mode="clinical",
+        ncomp=3,
+        CV_measure="V&VH",
+        seed=internal_seed,
+        id="rgcca_sup_clin_fav_n3_tau0.1"
+    ), 
+    lrn(
+        "surv.rgcca",
+        blocks=blocks,
+        tau=1,
+        clinical_fav=TRUE,
+        supervised=TRUE,
+        supervised_mode="clinical",
+        ncomp=3,
+        CV_measure="V&VH",
+        seed=internal_seed,
+        id="rgcca_sup_clin_fav_n3_tau1"
+    )
+)

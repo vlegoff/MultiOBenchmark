@@ -3,16 +3,9 @@ suppressMessages({
     library(mlr3proba)
     library(mlr3extralearners)
     library(data.table)
+    library(survjdr)
 })
 
-source("R/learners/learner_rgcca_surv.R")
-source("R/learners/learner_jive_surv.R")
-source("R/learners/learner_pca_joint_surv.R")
-source("R/learners/learner_pca_indiv_surv.R")
-
-datasets = c("KIRC", "LAML", "ESCA", "LGG", "BRCA")
-
-cv = rsmp("cv", folds=5)
 store_models = TRUE
 
 blocks = c("cnv", "mirna", "mutation", "rna")
@@ -89,6 +82,17 @@ learners <- list(
         "surv.rgcca",
         blocks=blocks,
         tau=0.1,
+        clinical_fav=TRUE,
+        supervised=FALSE,
+        ncomp=3,
+        seed=internal_seed,
+        CV_measure="auc",
+        id="12_clin_fav_auc"
+    ),
+    lrn(
+        "surv.rgcca",
+        blocks=blocks,
+        tau=0.1,
         clinical_fav=FALSE,
         supervised=FALSE,
         ncomp=3,
@@ -150,6 +154,17 @@ learners <- list(
         seed=internal_seed,
         CV_measure="ibs",
         id="12_ibs"
+    ),
+    lrn(
+        "surv.rgcca",
+        blocks=blocks,
+        tau=0.1,
+        clinical_fav=FALSE,
+        supervised=FALSE,
+        ncomp=3,
+        seed=internal_seed,
+        CV_measure="auc",
+        id="12_auc"
     ),
     lrn(
         "surv.rgcca",
@@ -221,6 +236,17 @@ learners <- list(
         "surv.rgcca",
         blocks=blocks,
         tau=0.1,
+        clinical_fav=TRUE,
+        supervised=TRUE,
+        ncomp=1,
+        seed=internal_seed,
+        CV_measure="auc",
+        id="14_clin_fav_auc"
+    ),
+    lrn(
+        "surv.rgcca",
+        blocks=blocks,
+        tau=0.1,
         clinical_fav=FALSE,
         supervised=TRUE,
         ncomp=1,
@@ -282,6 +308,17 @@ learners <- list(
         seed=internal_seed,
         CV_measure="ibs",
         id="14_ibs"
+    ),
+    lrn(
+        "surv.rgcca",
+        blocks=blocks,
+        tau=0.1,
+        clinical_fav=FALSE,
+        supervised=TRUE,
+        ncomp=1,
+        seed=internal_seed,
+        CV_measure="auc",
+        id="14_auc"
     ),
     lrn(
         "surv.jive",
@@ -348,6 +385,16 @@ learners <- list(
         blocks=blocks,
         rankJ=1,
         rankA=3,
+        clinical_fav=TRUE,
+        seed=internal_seed,
+        CV_measure="auc",
+        id="20_clin_fav_auc"
+    ),
+    lrn(
+        "surv.jive",
+        blocks=blocks,
+        rankJ=1,
+        rankA=3,
         clinical_fav=FALSE,
         seed=internal_seed,
         CV_measure="basic",
@@ -403,18 +450,14 @@ learners <- list(
         CV_measure="ibs",
         id="20_ibs"
     )
-)
-
-resources = list(
-    "pegasus"=list(walltime=60*60*24, ntasks=250, mem="10G", log="logs")
-)
-
-measures = list(
-    msr("surv.cindex", weight_meth="G2"), # uno C
-    msr("surv.graf"), # ibrier
-    msr("surv.rcll"),
-    msr("surv.dcalib"),
-    msr("time_train"),
-    msr("time_predict"),
-    msr("time_both")
+    lrn(
+        "surv.jive",
+        blocks=blocks,
+        rankJ=1,
+        rankA=3,
+        clinical_fav=FALSE,
+        seed=internal_seed,
+        CV_measure="auc",
+        id="20_auc"
+    )
 )

@@ -3,20 +3,21 @@ suppressMessages({
     library(mlr3proba)
     library(mlr3extralearners)
     library(data.table)
+    library(survjdr)
 })
 
-source("R/learners/learner_rgcca_surv.R")
-source("R/learners/learner_jive_surv.R")
-source("R/learners/learner_pca_joint_surv.R")
-source("R/learners/learner_pca_indiv_surv.R")
+#source("R/learners/learner_rgcca_surv.R")
+#source("R/learners/learner_jive_surv.R")
+#source("R/learners/learner_pca_joint_surv.R")
+#source("R/learners/learner_pca_indiv_surv.R")
 
-datasets = c("KIRC", "KIRP", "LUSC", "OV", "SKCM")
+#datasets = c("KIRC", "KIRP", "LUSC", "OV", "SKCM")
 
-cv = rsmp("cv", folds=5)
+#cv = rsmp("cv", folds=5)
 store_models = TRUE
 
-blocks = c("cnv", "mirna", "mutation", "rna")
-internal_seed = 123
+#blocks = c("cnv", "mirna", "mutation", "rna")
+#internal_seed = 123
 
 learners <- list(
     lrn(
@@ -209,16 +210,16 @@ learners <- list(
     )
 )
 
-resources = list(
-    "pegasus"=list(walltime=60*60*24, ntasks=100, mem="10G", log="logs")
-)
+#resources = list(
+    #"pegasus"=list(walltime=60*60*24, ntasks=100, mem="10G", log="logs")
+#)
 
-measures = list(
-    msr("surv.cindex", weight_meth="G2"), # uno C
-    msr("surv.graf"), # ibrier
-    msr("surv.rcll"),
-    msr("surv.dcalib"),
-    msr("time_train"),
-    msr("time_predict"),
-    msr("time_both")
-)
+#measures = list(
+    #msr("surv.cindex", weight_meth="G2"), # uno C
+    #msr("surv.graf"), # ibrier
+    #msr("surv.rcll"),
+    #msr("surv.dcalib"),
+    #msr("time_train"),
+    #msr("time_predict"),
+    #msr("time_both")
+#)

@@ -10,7 +10,6 @@ submitLrn <- function(lrn_id,
                       reg=getDefaultRegistry()) {
 
     ids = findNotSubmitted()
-    print(ids)
     err =  findErrors()
     not_finished = findNotDone()[
         !(job.id %in% ids$job.id | job.id %in% err$job.id)

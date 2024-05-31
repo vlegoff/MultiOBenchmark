@@ -14,6 +14,8 @@ parser = ArgumentParser()
 
 parser$add_argument("-r", "--registry", nargs=1,
     help="Name of registry to extract results from. The registry must exist")
+parser$add_argument("-m", "--measures", nargs=1,
+    help="")
 parser$add_argument("-N", "--Ncpus", default=1,
     help="number of cpu to use [default %(default)s]")
 parser$add_argument("-C", "--chunk_size", default=100L, type="integer",
@@ -31,9 +33,15 @@ args = parser$parse_args()
 # Setting variables for cluster
 data.table::setDTthreads(args$Ncpus)
 
-registry_dir = paste0("registries/", args$registry)
-config_file = paste0("configs/", args$registry, ".config.R")
-res_dir = paste0(args$directory, "/", args$registry)
+#registry_dir = paste0("registries/", args$registry)
+registry_dir = args$registry
+#config_file = paste0("configs/", args$registry, ".config.R")
+
+source(args$measures)
+
+#res_dir = paste0(args$directory, "/", args$registry)
+res_dir = args$directory
+res_file = tail(strsplit(args$directory, "/")[[1]], 1)
 if (!dir.exists(res_dir)) dir.create(res_dir)
 
 # Loading batchtools registry
@@ -44,7 +52,7 @@ if (dir.exists(registry_dir)) {
 }
 reg$work.dir <- getwd()
 
-source(config_file)
+#source(config_file)
 
 done = findDone()$job.id
 done = split(done, ceiling(seq_along(done)/args$chunk_size))
@@ -53,7 +61,7 @@ for (i in seq_along(done)) {
     print(sprintf("%d/%d chunks", i, length(done)))
     bmr <- reduceResultsBatchmark(done[[i]], store_backends=TRUE)
     if (args$rds)
-        saveRDS(bmr, sprintf("%/s/%s_results_%06d.rds", res_dir, args$registry,
+        saveRDS(bmr, sprintf("%/s/%s_results_%06d.rds", res_dir, res_file,
                              i))
     cols = c("uhash", "nr", "task_id", "learner_id", "resampling_id",
              "iteration", sapply(measures, `[[`, "id"))
@@ -71,16 +79,4 @@ if(nrow(findErrors()) > 0) {
     # fill=TRUE sould not be necessary now, remove it
 }
 
-
-fwrite(bmrdt, sprintf("%s/%s_results.csv", res_dir, args$registry))
-
-# from stackoverflow, add NA lines for iteration that failed
-# (e.g due to errors)
-# May have undefined behaviour if e.g every last iteration fails 
-# for every learner on every dataset
-# replaced with the if(nrow(findErrors()) > 0) block
-#iter_max = max(bmrdt$iteration)
-#bmrdt = bmrdt[,
-    #.SD[.(iteration=1:iter_max), on="iteration"],
-    #by=.(learner_id, task_id)
-#] 
+fwrite(bmrdt, sprintf("%s/%s_results.csv", res_dir, res_file))

@@ -13,7 +13,8 @@ parser$add_argument("-m", "--message", action="store_true", default=FALSE,
 
 args = parser$parse_args()
 
-registry_dir = paste0("registries/", args$registry)
+#registry_dir = paste0("registries/", args$registry)
+registry_dir = args$registry
 
 # Loading batchtools registry
 if (dir.exists(registry_dir)) {
