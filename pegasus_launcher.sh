@@ -15,4 +15,5 @@ Rscript R/bench_experiment.R \
     -b batchtools_interactive.conf.R \
     -N 4 -s 1234 \
     --resubmit_not_finished \
-    --pegasus
+    --pegasus \
+    --skip_batchmark
