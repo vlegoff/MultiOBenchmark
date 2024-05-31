@@ -57,6 +57,7 @@ registry_dir = args$registry
 #sourcing config files
 source(args$learners)
 source(args$data)
+if (!is.null(args$resources)) source(args$resources)
 
 # Loading batchtools registry
 # make batchconf 
@@ -93,87 +94,88 @@ if (!reg$cluster.functions$name %in% c("Interactive", "Multicore")
         cluster.functions$name))
 }
 
-names(learners) = sapply(learners, `[[`, "id")
-
-# load datasets
-for (d in names(datasets)) {
-    if (!all(c("target", "path") %in% names(datasets[[d]]))) {
-        stop(paste0("dataset ", d, " lacks either target or path"))
-    }
-    datasets[[d]]$x = fread(datasets[[d]]$path)
-    if (!all(datasets[[d]]$target %in% colnames(datasets[[d]]$x))) {
-        stop(paste0("targets ",
-                paste(datasets[[d]]$target, collapse=" "), 
-                " are not in dataset ", d))
-    }
-}
-
-task_functions = list(
-    survival=as_task_surv,
-    regression=as_task_regr,
-    classification=as_task_classif
-)
-
-if (task_type %in% names(task_functions)) {
-    create_task = task_functions[[task_type]]
-} else if (task_type %in% c("density", "clustering")) {
-    stop(paste0("task type ", task_type, " not yet implemented"))
-} else {
-    stop(paste0("task type ", task_type, " not recognized"))
-}
-
-# Defining the tasks
-# check that all targets are in the dataset outside of mclapply?
-tasks <- mclapply(names(datasets),
-    function(d) {
-        parms = if (task_type == "survival") {
-            list(
-                x=datasets[[d]]$x,
-                time=datasets[[d]]$target[1],
-                event=datasets[[d]]$target[2],
-                type="right",
-                id=d
-            )
-        } else if (task_type=="regression" | task_type=="classification") {
-            list(
-                x=datasets[[d]]$x,
-                target=datasets[[d]]$target,
-                id=d
-            )
-        } else {
-            stop("wtf!")
-        }
-        tsk = mlr3misc::invoke(create_task, .args=parms)
-        for (s in datasets[[d]]$strata) {
-            tsk$add_strata(s)
-        }
-        tsk
-    },
-    mc.cores=args$Ncpus)
-names(tasks) <- names(datasets)
-
-paired_cv = ifelse(!exists("paired_cv"), F, paired_cv)
-store_models = ifelse(!exists("store_models"), F, store_models)
-# check if cv has been defined in config
-# mainly for backward compatibility
-if(!exists("cv")) {
-    cv = rsmp("repeated_cv", repeats=10, folds=5)
-} else if (cv$id=="custom") {
-    if(!paired_cv) stop("cv is custom but not paired")
-    if(!exists("folds")) stop("cv is custom but no folds are provided")
-    if(!length(folds)==length(datasets)) stop("wrong number of resamplings")
-    cv = vector("list", length=length(tasks)) 
-    for(i in seq_along(tasks)) {
-        #d = datasets[i]
-        d = names(tasks)[i]
-        cv[[i]] = rsmp("custom")$instantiate(tasks[[d]],
-            train=folds[[d]]$train, test=folds[[d]]$test)
-    }
-} else {
-    cv = cv
-}
-
 if (!args$skip_batchmark) {
+
+    names(learners) = sapply(learners, `[[`, "id")
+
+    # load datasets
+    for (d in names(datasets)) {
+        if (!all(c("target", "path") %in% names(datasets[[d]]))) {
+            stop(paste0("dataset ", d, " lacks either target or path"))
+        }
+        datasets[[d]]$x = fread(datasets[[d]]$path)
+        if (!all(datasets[[d]]$target %in% colnames(datasets[[d]]$x))) {
+            stop(paste0("targets ",
+                    paste(datasets[[d]]$target, collapse=" "), 
+                    " are not in dataset ", d))
+        }
+    }
+
+    task_functions = list(
+        survival=as_task_surv,
+        regression=as_task_regr,
+        classification=as_task_classif
+    )
+
+    if (task_type %in% names(task_functions)) {
+        create_task = task_functions[[task_type]]
+    } else if (task_type %in% c("density", "clustering")) {
+        stop(paste0("task type ", task_type, " not yet implemented"))
+    } else {
+        stop(paste0("task type ", task_type, " not recognized"))
+    }
+
+    # Defining the tasks
+    # check that all targets are in the dataset outside of mclapply?
+    tasks <- mclapply(names(datasets),
+        function(d) {
+            parms = if (task_type == "survival") {
+                list(
+                    x=datasets[[d]]$x,
+                    time=datasets[[d]]$target[1],
+                    event=datasets[[d]]$target[2],
+                    type="right",
+                    id=d
+                )
+            } else if (task_type=="regression" | task_type=="classification") {
+                list(
+                    x=datasets[[d]]$x,
+                    target=datasets[[d]]$target,
+                    id=d
+                )
+            } else {
+                stop("wtf!")
+            }
+            tsk = mlr3misc::invoke(create_task, .args=parms)
+            for (s in datasets[[d]]$strata) {
+                tsk$add_strata(s)
+            }
+            tsk
+        },
+        mc.cores=args$Ncpus)
+    names(tasks) <- names(datasets)
+
+    paired_cv = ifelse(!exists("paired_cv"), F, paired_cv)
+    store_models = ifelse(!exists("store_models"), F, store_models)
+    # check if cv has been defined in config
+    # mainly for backward compatibility
+    if(!exists("cv")) {
+        cv = rsmp("repeated_cv", repeats=10, folds=5)
+    } else if (cv$id=="custom") {
+        if(!paired_cv) stop("cv is custom but not paired")
+        if(!exists("folds")) stop("cv is custom but no folds are provided")
+        if(!length(folds)==length(datasets)) stop("wrong number of resamplings")
+        cv = vector("list", length=length(tasks)) 
+        for(i in seq_along(tasks)) {
+            #d = datasets[i]
+            d = names(tasks)[i]
+            cv[[i]] = rsmp("custom")$instantiate(tasks[[d]],
+                train=folds[[d]]$train, test=folds[[d]]$test)
+        }
+    } else {
+        cv = cv
+    }
+
     design <- benchmark_grid(tasks, learners, cv, paired=paired_cv)
     batchmark(design, store_models=store_models, reg=reg)
 }
@@ -190,10 +192,10 @@ if(!args$pegasus &
     if (args$resubmit_errors) ids = rbind(ids, err)
     if (args$resubmit_not_finished) ids = rbind(ids, not_finished)
     submitJobs(ids=ids, reg=reg)
+    if (reg$cluster.functions$name == "Multicore") waitForJobs()
 
 } else if (!args$pegasus) {
 
-    source(args$resources)
     resources = resources[names(resources)!="pegasus"]
     lapply(names(resources),
         function(l) submitLrn(l,
@@ -204,7 +206,6 @@ if(!args$pegasus &
 
 } else { #bypassing batchtools and creating pegasus DAG
 
-    source(args$resources)
     pegasus_dir = paste0(reg$file.dir, "/pegasus")
     if (dir.exists(pegasus_dir)) {
         unlink(pegasus_dir, recursive=TRUE)
