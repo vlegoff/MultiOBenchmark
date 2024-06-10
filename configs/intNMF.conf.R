@@ -17,6 +17,7 @@ learners <- list(
         k=2,
         weights="frob",
         clinical_fav=TRUE,
+        n.ini=10, # faster and should not impact that much
         CV_measure="V&VH",
         seed=internal_seed,
         id="intnmf_clin_fav_k2_frob"
@@ -27,6 +28,7 @@ learners <- list(
         k=3,
         weights="frob",
         clinical_fav=TRUE,
+        n.ini=10,
         CV_measure="V&VH",
         seed=internal_seed,
         id="intnmf_clin_fav_k3_frob"
@@ -37,6 +39,7 @@ learners <- list(
         k=5,
         weights="frob",
         clinical_fav=TRUE,
+        n.ini=10,
         CV_measure="V&VH",
         seed=internal_seed,
         id="intnmf_clin_fav_k5_frob"
