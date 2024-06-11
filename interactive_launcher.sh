@@ -3,7 +3,7 @@
 #SBATCH -n 1
 #SBATCH -c 1
 #SBATCH --mem-per-cpu=10G
-#SBATCH -t 12:00:00
+#SBATCH -t 24:00:00
 #SBATCH -o logs/job.%j.out
 #SBATCH -e logs/job.%j.err
 
