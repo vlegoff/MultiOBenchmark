@@ -19,13 +19,11 @@ parser$add_argument("-l", "--learners", nargs=1,
 parser$add_argument("-d", "--data", nargs=1,
     help="config file containing the description of the datasets on which
     to run the learners", required=TRUE)
-# resources should not be mandatory, but will do for now
 parser$add_argument("-c", "--resources", nargs=1,
     help="resources with which to launch the benchmark", required=FALSE)
 parser$add_argument("-r", "--registry", nargs=1,
     help="path to the batchtools registry to use.
     Will be created if it does not exists", required=TRUE)
-# same as for resources
 parser$add_argument("-b", "--batchconf",
     help="path to batchtools configuration file", required=FALSE)
 parser$add_argument("-N", "--Ncpus", default=1L, type="integer", choices=1:36,
@@ -39,9 +37,11 @@ parser$add_argument("--resubmit_not_finished", action="store_true",
     WARNING: this may resubmit jobs that are still running 
     and I don't know what happens in this case.")
 parser$add_argument("--pegasus", action="store_true",
-    help="")
+    help="For CNRGH internal use only, bypass batchtools to submits jobs 
+    through pegasus, an MPI microscheduler")
 parser$add_argument("--skip_batchmark", action="store_true",
-    help="")
+    help="Skip data loading and submission through batchmark. Useful to quickly
+    relaunch an already defined benchmark")
 
 # when no resources/no batchtools, just launch with interactive mode
 
