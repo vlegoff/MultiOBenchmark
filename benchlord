@@ -1,6 +1,6 @@
 #!/bin/bash
 
-function main_help() {
+function help() {
     echo list of commands:
     echo help: print help
     echo launch: launch benchmark from config file
@@ -32,7 +32,7 @@ function main() {
             ;;
         * )
             echo "unknown command"
-            main_help 1;
+            help;
             exit 1;
             ;;
     esac
