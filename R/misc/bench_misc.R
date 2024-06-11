@@ -37,10 +37,3 @@ submitLrn <- function(lrn_id,
     submitJobs(ids=chunks, resources=resources, reg=reg)
 
 }
-
-ifNotNA= function(e, default) {
-    exp = enexpr(e)
-    default = enexpr(default)
-    val = rlang::`!!`(e)
-    if (!is.na(val)) {return(val)} else {return(!!default)}
-}
