@@ -23,10 +23,6 @@ if (dir.exists(registry_dir)) {
     stop("registry must exists")
 }
 
-# not used anymore, never worked properly
-v = function(...) cat(sprintf(...), sep='', file=stdout())
-verr = function(...) cat(sprintf(...), sep='', file=stderr())
-
 done = findDone()
 not_sub = findNotSubmitted()
 err = findErrors()
