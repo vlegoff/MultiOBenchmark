@@ -3,9 +3,8 @@ suppressMessages({
     library(mlr3proba)
     library(mlr3extralearners)
     library(data.table)
+    library(survjdr)
 })
-
-source("R/learners/learner_mofa_surv.R")
 
 blocks = c("cnv", "mirna", "mutation", "rna")
 internal_seed = 123
