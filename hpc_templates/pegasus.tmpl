@@ -3,6 +3,7 @@
 #MSUB -T <%= resources$walltime %>
 #MSUB -n <%= resources$ntasks %>
 #MSUB -c 1
+#MSUB -E --exclude=inti[000-019,037-042]
 #MSUB -E --mem-per-cpu=<%= resources$mem %> 
 <%= if (!is.null(resources$log)){ 
     paste0("#MSUB -o ", base::normalizePath(resources$log), "/job.%I.out")
