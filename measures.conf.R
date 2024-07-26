@@ -1,3 +1,5 @@
+library(mlr3proba)
+
 measures = list(
     msr("surv.cindex", weight_meth="G2", p_max=0.9, id="cindex_p0.9"), # uno C
     msr("surv.cindex", weight_meth="G2", id="cindex_default"), # uno C
