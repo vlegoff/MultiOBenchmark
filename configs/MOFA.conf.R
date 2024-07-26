@@ -3,6 +3,7 @@ suppressMessages({
     library(mlr3proba)
     library(mlr3extralearners)
     library(data.table)
+    library(survjdr)
 })
 
 blocks = c("cnv", "mirna", "mutation", "rna")
@@ -31,6 +32,6 @@ learners <- list(
         convergence_mode="slow",
         CV_measure="V&VH",
         seed=internal_seed,
-        id="mofa_clin_fav_f3_scale"
-    ),
+        id="mofa_clin_fav_f3"
+    )
 )
