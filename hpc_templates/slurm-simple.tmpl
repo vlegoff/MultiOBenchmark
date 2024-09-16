@@ -17,21 +17,18 @@
 ## Default resources can be set in your .batchtools.conf.R by defining the variable
 ## 'default.resources' as a named list.
 
-<%
-# relative paths are not handled well by Slurm
-log.file = fs::path_expand(log.file)
--%>
-
-
 #SBATCH --job-name=<%= job.name %>
-#SBATCH --output=<%= log.file %>
-#SBATCH --error=<%= log.file %>
+<%= if (!is.null(resources$log)){ 
+    paste0("#SBATCH -o ", base::normalizePath(resources$log), "/job.%j.out")
+} %>
+<%= if (!is.null(resources$log)){ 
+    paste0("#SBATCH -e ", base::normalizePath(resources$log), "/job.%j.err")
+} %>
 #SBATCH --time=<%= ceiling(resources$walltime / 60) %>
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=<%= resources$ncpus %>
 #SBATCH --mem-per-cpu=<%= resources$memory %>
 <%= if (!is.null(resources$partition)) sprintf(paste0("#SBATCH --partition='", resources$partition, "'")) %>
-<%= if (array.jobs) sprintf("#SBATCH --array=1-%i", nrow(jobs)) else "" %>
 
 ## Initialize work environment like
 ## source /etc/profile

@@ -7,9 +7,16 @@
 #SBATCH -o logs/job.%j.out
 #SBATCH -e logs/job.%j.err
 
-Rscript R/extract_results.R \
-    -r registries/${1} \
-    -d results/${1} \
+module load extenv/own
+module load benchbatch
+
+REG=test
+
+mkdir results/$REG
+
+benchbatch results \
+    -r registries/$REG \
+    -d results/$REG \
     -m measures.conf.R \
     -N $SLURM_JOB_CPUS_PER_NODE \
-    -C 100
+    -C 100 -v

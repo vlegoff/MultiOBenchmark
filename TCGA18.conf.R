@@ -1,5 +1,5 @@
 cv = rsmp("custom")
-folds = readRDS("folds.rds")
+folds = readRDS("data/folds.rds")
 paired_cv = TRUE
 
 task_type="survival"
