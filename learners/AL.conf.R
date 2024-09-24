@@ -5,21 +5,9 @@ suppressMessages({
     #library(mlr3tuning)
     library(mlr3misc)
     library(data.table)
+    library(survjdr)
 })
 
-source("R/learners/cv_prioritylasso_learner.R")
-source("R/learners/blockforest_learner.R")
-#source("R/learners/CoxBoost_clin_fav_surv_learner.R")
-source("R/learners/IPFlasso_surv_learner.R")
-source("R/learners/glmboost_surv_learner.R")
-
-datasets <- c("BLCA", "BRCA", "COAD", "ESCA", "HNSC", "KIRC", "KIRP", "LAML",
-              "LGG", "LIHC", "LUAD", "LUSC", "OV", "PAAD", "SARC", "SKCM",
-              "STAD", "UCEC")
-
-cv = rsmp("custom")
-folds = readRDS("folds.rds")
-paired_cv = TRUE
 
 learners <- list(
     lrn("surv.ranger", id="ranger", min.node.size=3),
@@ -38,7 +26,7 @@ learners <- list(
     #),
     lrn(
         "surv.cv_prioritylasso",
-        id="prioritylasso",
+        id="prioritylasso_clin",
         block1.penalization=TRUE,
         lambda.type="lambda.min",
         standardize=TRUE,
@@ -62,7 +50,7 @@ learners <- list(
     ),
     lrn(
         "surv.blockforest",
-        id="blockforest",
+        id="blockforest_clin",
         block.method="BlockForest",
         num.trees=2000,
         nsets=300,
@@ -70,59 +58,10 @@ learners <- list(
     ),
     lrn(
         "surv.ipflasso",
-        id="ipflasso",
+        id="ipflasso_clin",
         blocks=c("cnv", "mirna", "mutation","rna", "clinical"),
         seed=123
     )
 )
 
 #resample(task, lrn("surv.glmboost", mstop=2), rsmp("cv", folds=2))
-
-#test_lrn = lrn("surv.ipflasso", id="ipflasso", blocks=c("mirna", "clinical"))
-#cv2 = rsmp("cv", folds=2)
-#resample(task, test_lrn, cv2)
-
-resources = list(
-    "pegasus" = list(
-        walltime=60*60*24, ntasks=100, memory=10000, logs="logs/"
-    ),
-    "ranger"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=1
-    ),
-    "lasso"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=50
-    ),
-    #"coxboost_clin_fav"=list(
-        #walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=30
-    #),
-    #"coxboost"=list(
-        #walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=30
-    #),
-    #"surv.glmboost.tuned"=list(
-        #walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=50
-    #),
-    "prioritylasso"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
-    ),
-    "prioritylasso_clin_fav"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
-    ),
-    "blockforest"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=1
-    ),
-    "ipflasso"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=1
-    )
-)
-
-measures = list(
-    msr("surv.cindex", weight_meth="G2", p_max=0.9), # uno C
-    msr("surv.cindex", weight_meth="G2", id="cindex_default"), # uno C
-    msr("surv.graf", id="graf_default"),
-    msr("surv.graf", p_max=0.9), # ibrier
-    msr("surv.rcll"),
-    msr("surv.dcalib"),
-    msr("time_train"),
-    msr("time_predict"),
-    msr("time_both")
-)
