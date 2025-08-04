@@ -10,13 +10,12 @@
 module load extenv/own
 module load benchbatch
 
-REG=test
+REG=AL_woClin
 
 benchbatch run \
     -m pegasus \
     -c resources/pegasus.conf.R \
     -r registries/$REG \
-    -l configs/${1}.conf.R \
-    -N 4 \
-    --resubmit_not_finished \
-    --resubmit_errors
+    -N $SLURM_JOB_CPUS_PER_NODE \
+    --resubmit_not_finished #\
+    #--resubmit_errors

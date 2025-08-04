@@ -3,14 +3,14 @@
 #MSUB -n 1
 #MSUB -c 8
 #MSUB -E --mem-per-cpu=10G
-#MSUB -E -t 24:00:00
+#MSUB -T 14400
 #MSUB -o logs/job.%I.out
 #MSUB -e logs/job.%I.err
 
 module load extenv/own
 module load benchbatch
 
-REG=test
+REG=AL_woClin
 
 mkdir results/$REG
 

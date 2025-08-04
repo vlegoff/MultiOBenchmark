@@ -10,7 +10,7 @@
 module load extenv/own
 module load benchbatch
 
-REG=test
+REG=AL
 
 benchbatch populate \
     -l learners/$REG.conf.R \
