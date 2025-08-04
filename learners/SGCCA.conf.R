@@ -3,21 +3,12 @@ suppressMessages({
     library(mlr3proba)
     library(mlr3extralearners)
     library(data.table)
+    library(survjdr)
 })
-
-datasets <- c("BLCA", "BRCA", "COAD", "ESCA", "HNSC", "KIRC", "KIRP", "LAML",
-              "LGG", "LIHC", "LUAD", "LUSC", "OV", "PAAD", "SARC", "SKCM",
-              "STAD", "UCEC")
-
-cv = rsmp("custom")
-folds = readRDS("folds.rds")
-paired_cv = TRUE
-
-#source("R/learners/RGCCA_surv_learner.R")
-source("R/learners/learner_sgcca_surv.R")
 
 blocks = c("cnv", "mirna", "mutation", "rna")
 internal_seed = 123
+cv_save_path = "~/scratch_MS/legoff/benchmark/results/cv_logs/SGCCA"
 
 learners <- list(
     lrn(
@@ -28,6 +19,7 @@ learners <- list(
         supervised=FALSE,
         ncomp=1,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="sgcca_unsup_clin_fav_n1_s0.5"
     ), 
@@ -39,6 +31,7 @@ learners <- list(
         supervised=FALSE,
         ncomp=3,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="sgcca_unsup_clin_fav_n3_s0.5"
     ), 
@@ -50,6 +43,7 @@ learners <- list(
         supervised=TRUE,
         ncomp=1,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="sgcca_sup_clin_fav_n1_s0.5"
     ), 
@@ -61,6 +55,7 @@ learners <- list(
         supervised=TRUE,
         ncomp=3,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="sgcca_sup_clin_fav_n3_s0.5"
     ), 
@@ -72,6 +67,7 @@ learners <- list(
         supervised=FALSE,
         ncomp=1,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="sgcca_unsup_clin_fav_n1_s0.75"
     ), 
@@ -83,6 +79,7 @@ learners <- list(
         supervised=FALSE,
         ncomp=3,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="sgcca_unsup_clin_fav_n3_s0.75"
     ), 
@@ -94,6 +91,7 @@ learners <- list(
         supervised=TRUE,
         ncomp=1,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="sgcca_sup_clin_fav_n1_s0.75"
     ), 
@@ -105,49 +103,8 @@ learners <- list(
         supervised=TRUE,
         ncomp=3,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="sgcca_sup_clin_fav_n3_s0.75"
     ) 
-)
-
-resources = list(
-    "pegasus" = list(
-        walltime=60*60*24, ntasks=200, memory=10000, logs="logs/"
-    ),
-    "sgcca_unsup_clin_fav_n1_s0.5"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=20
-    ),
-    "sgcca_unsup_clin_fav_n3_s0.5"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=20
-    ),
-    "sgcca_sup_clin_fav_n1_s0.5"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=20
-    ),
-    "sgcca_sup_clin_fav_n3_s0.5"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=20
-    ),
-    "sgcca_unsup_clin_fav_n1_s0.75"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=20
-    ),
-    "sgcca_unsup_clin_fav_n3_s0.75"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=20
-    ),
-    "sgcca_sup_clin_fav_n1_s0.75"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=20
-    ),
-    "sgcca_sup_clin_fav_n3_s0.75"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=20
-    )
-)
-
-measures = list(
-    msr("surv.cindex", weight_meth="G2", p_max=0.9), # uno C
-    msr("surv.cindex", weight_meth="G2", id="cindex_default"), # uno C
-    msr("surv.graf", id="graf_default"),
-    msr("surv.graf", p_max=0.9), # ibrier
-    msr("surv.rcll"),
-    msr("surv.dcalib"),
-    msr("time_train"),
-    msr("time_predict"),
-    msr("time_both")
 )

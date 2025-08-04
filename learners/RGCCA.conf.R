@@ -6,17 +6,6 @@ suppressMessages({
     library(survjdr)
 })
 
-datasets <- c("BLCA", "BRCA", "COAD", "ESCA", "HNSC", "KIRC", "KIRP", "LAML",
-              "LGG", "LIHC", "LUAD", "LUSC", "OV", "PAAD", "SARC", "SKCM",
-              "STAD", "UCEC")
-
-cv = rsmp("custom")
-folds = readRDS("data/folds.rds")
-paired_cv = TRUE
-
-#source("R/learners/RGCCA_surv_learner.R")
-#source("R/learners/learner_rgcca_surv.R")
-
 blocks = c("cnv", "mirna", "mutation", "rna")
 internal_seed = 123
 cv_save_path = "~/scratch_MS/legoff/benchmark/results/cv_logs/RGCCA"

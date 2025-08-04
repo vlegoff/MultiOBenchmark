@@ -6,12 +6,9 @@ suppressMessages({
     library(survjdr)
 })
 
-cv = rsmp("custom")
-folds = readRDS("folds.rds")
-paired_cv = TRUE
-
 blocks = c("cnv", "mirna", "mutation", "rna")
 internal_seed = 123
+cv_save_path = "~/scratch_MS/legoff/benchmark/results/cv_logs/SJIVE_woClin"
 
 # rankJ = 0 or rankA=0 not working due to jive.predict
 learners <- list(
@@ -23,6 +20,7 @@ learners <- list(
         eta=0.5,
         clinical_fav=FALSE,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         max.iter=2000,
         seed=internal_seed,
         id="sjive_j1_a1_eta0.5"
@@ -35,6 +33,7 @@ learners <- list(
         eta=0.5,
         clinical_fav=FALSE,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         max.iter=2000,
         seed=internal_seed,
         id="sjive_j3_a1_eta0.5"
@@ -47,6 +46,7 @@ learners <- list(
         eta=0.5,
         clinical_fav=FALSE,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         max.iter=2000,
         seed=internal_seed,
         id="sjive_j1_a3_eta0.5"
@@ -59,6 +59,7 @@ learners <- list(
         eta=0.5,
         clinical_fav=FALSE,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         max.iter=2000,
         seed=internal_seed,
         id="sjive_j3_a3_eta0.5"
@@ -71,6 +72,7 @@ learners <- list(
         eta=0.5,
         clinical_fav=FALSE,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         max.iter=2000,
         seed=internal_seed,
         id="sjive_j0_a1_eta0.5"
@@ -83,6 +85,7 @@ learners <- list(
         eta=0.5,
         clinical_fav=FALSE,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         max.iter=2000,
         seed=internal_seed,
         id="sjive_j0_a3_eta0.5"
@@ -95,6 +98,7 @@ learners <- list(
         eta=0.5,
         clinical_fav=FALSE,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         max.iter=2000,
         seed=internal_seed,
         id="sjive_j1_a0_eta0.5"
@@ -107,8 +111,217 @@ learners <- list(
         eta=0.5,
         clinical_fav=FALSE,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         max.iter=2000,
         seed=internal_seed,
         id="sjive_j3_a0_eta0.5"
+    ),
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=1,
+        rankA=1,
+        eta=0.1,
+        clinical_fav=FALSE,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_j1_a1_eta0.1"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=3,
+        rankA=1,
+        eta=0.1,
+        clinical_fav=FALSE,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_j3_a1_eta0.1"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=1,
+        rankA=3,
+        eta=0.1,
+        clinical_fav=FALSE,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_j1_a3_eta0.1"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=3,
+        rankA=3,
+        eta=0.1,
+        clinical_fav=FALSE,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_j3_a3_eta0.1"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=0,
+        rankA=1,
+        eta=0.1,
+        clinical_fav=FALSE,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_j0_a1_eta0.1"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=0,
+        rankA=3,
+        eta=0.1,
+        clinical_fav=FALSE,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_j0_a3_eta0.1"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=1,
+        rankA=0,
+        eta=0.1,
+        clinical_fav=FALSE,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_j1_a0_eta0.1"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=3,
+        rankA=0,
+        eta=0.1,
+        clinical_fav=FALSE,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_j3_a0_eta0.1"
+    ),
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=1,
+        rankA=1,
+        eta=0.9,
+        clinical_fav=FALSE,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_j1_a1_eta0.9"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=3,
+        rankA=1,
+        eta=0.9,
+        clinical_fav=FALSE,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_j3_a1_eta0.9"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=1,
+        rankA=3,
+        eta=0.9,
+        clinical_fav=FALSE,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_j1_a3_eta0.9"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=3,
+        rankA=3,
+        eta=0.9,
+        clinical_fav=FALSE,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_j3_a3_eta0.9"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=0,
+        rankA=1,
+        eta=0.9,
+        clinical_fav=FALSE,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_j0_a1_eta0.9"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=0,
+        rankA=3,
+        eta=0.9,
+        clinical_fav=FALSE,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        max.iter=2000,
+        seed=internal_seed,
+        id="sjive_j0_a3_eta0.9"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=1,
+        rankA=0,
+        eta=0.9,
+        clinical_fav=FALSE,
+        max.iter=2000,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        seed=internal_seed,
+        id="sjive_j1_a0_eta0.9"
+    ), 
+    lrn(
+        "surv.sjive",
+        blocks=blocks,
+        rankJ=3,
+        rankA=0,
+        eta=0.9,
+        clinical_fav=FALSE,
+        max.iter=2000,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        seed=internal_seed,
+        id="sjive_j3_a0_eta0.9"
     ) 
 )

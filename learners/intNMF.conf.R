@@ -8,8 +8,8 @@ suppressMessages({
 
 blocks = c("cnv", "mirna", "mutation", "rna")
 internal_seed = 123
+cv_save_path = "~/scratch_MS/legoff/benchmark/results/cv_logs/intNMF"
 
-# rankJ = 0 or rankA=0 not working due to jive.predict
 learners <- list(
     lrn(
         "surv.intnmf",
@@ -19,6 +19,7 @@ learners <- list(
         clinical_fav=TRUE,
         n.ini=10, # faster and should not impact that much
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="intnmf_clin_fav_k2_frob"
     ), 
@@ -30,6 +31,7 @@ learners <- list(
         clinical_fav=TRUE,
         n.ini=10,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="intnmf_clin_fav_k3_frob"
     ), 
@@ -41,6 +43,7 @@ learners <- list(
         clinical_fav=TRUE,
         n.ini=10,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="intnmf_clin_fav_k5_frob"
     ) 

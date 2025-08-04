@@ -10,8 +10,8 @@ suppressMessages({
 
 
 learners <- list(
-    lrn("surv.ranger", id="ranger", min.node.size=3),
-    lrn("surv.cv_glmnet", id="lasso", alpha=1, s="lambda.min",
+    lrn("surv.ranger", id="ranger_clin", min.node.size=3),
+    lrn("surv.cv_glmnet", id="lasso_clin", alpha=1, s="lambda.min",
         type.measure="C"),
     #lrn("surv.cv_coxboost", id="coxboost", maxstepno=100),
     #lrn("surv.cv_coxboost_clin_fav", id="coxboost_clin_fav", maxstepno=100),

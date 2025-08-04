@@ -5,21 +5,8 @@ suppressMessages({
     #library(mlr3tuning)
     library(mlr3misc)
     library(data.table)
+    library(survjdr)
 })
-
-source("R/learners/cv_prioritylasso_learner.R")
-source("R/learners/blockforest_learner.R")
-#source("R/learners/CoxBoost_clin_fav_surv_learner.R")
-source("R/learners/IPFlasso_surv_learner.R")
-source("R/learners/glmboost_surv_learner.R")
-
-datasets <- c("BLCA", "BRCA", "COAD", "ESCA", "HNSC", "KIRC", "KIRP", "LAML",
-              "LGG", "LIHC", "LUAD", "LUSC", "OV", "PAAD", "SARC", "SKCM",
-              "STAD", "UCEC")
-
-cv = rsmp("custom")
-folds = readRDS("folds.rds")
-paired_cv = TRUE
 
 learners <- list(
     GraphLearner$new(
@@ -75,36 +62,3 @@ learners <- list(
 #test_lrn = lrn("surv.ipflasso", id="ipflasso", blocks=c("mirna", "clinical"))
 #cv2 = rsmp("cv", folds=2)
 #resample(task, test_lrn, cv2)
-
-resources = list(
-    "pegasus" = list(
-        walltime=60*60*24, ntasks=25, memory=10000, logs="logs/"
-    ),
-    "ranger"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
-    ),
-    "lasso"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=10
-    ),
-    "prioritylasso"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=5
-    ),
-    "blockforest"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=1
-    ),
-    "ipflasso"=list(
-        walltime=60*60*24, ncpus=1, memory=10000, jobs_per_chunk=5
-    )
-)
-
-measures = list(
-    msr("surv.cindex", weight_meth="G2", p_max=0.9), # uno C
-    msr("surv.cindex", weight_meth="G2", id="cindex_default"), # uno C
-    msr("surv.graf", id="graf_default"),
-    msr("surv.graf", p_max=0.9), # ibrier
-    msr("surv.rcll"),
-    msr("surv.dcalib"),
-    msr("time_train"),
-    msr("time_predict"),
-    msr("time_both")
-)

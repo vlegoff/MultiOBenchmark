@@ -3,20 +3,12 @@ suppressMessages({
     library(mlr3proba)
     library(mlr3extralearners)
     library(data.table)
+    library(survjdr)
 })
-
-datasets <- c("BLCA", "BRCA", "COAD", "ESCA", "HNSC", "KIRC", "KIRP", "LAML",
-              "LGG", "LIHC", "LUAD", "LUSC", "OV", "PAAD", "SARC", "SKCM",
-              "STAD", "UCEC")
-
-cv = rsmp("custom")
-folds = readRDS("folds.rds")
-paired_cv = TRUE
-
-source("R/learners/learner_jive_surv.R")
 
 blocks = c("cnv", "mirna", "mutation", "rna")
 internal_seed = 123
+cv_save_path = "~/scratch_MS/legoff/benchmark/results/cv_logs/JIVE"
 
 # rankJ = 0 or rankA=0 not working due to jive.predict
 learners <- list(
@@ -27,6 +19,7 @@ learners <- list(
         rankA=1,
         clinical_fav=TRUE,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="jive_clin_fav_j1_a1"
     ), 
@@ -37,6 +30,7 @@ learners <- list(
         rankA=1,
         clinical_fav=TRUE,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="jive_clin_fav_j3_a1"
     ), 
@@ -47,6 +41,7 @@ learners <- list(
         rankA=3,
         clinical_fav=TRUE,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="jive_clin_fav_j1_a3"
     ), 
@@ -57,37 +52,8 @@ learners <- list(
         rankA=3,
         clinical_fav=TRUE,
         CV_measure="V&VH",
+        cv_save_path=cv_save_path,
         seed=internal_seed,
         id="jive_clin_fav_j3_a3"
     )
-)
-
-resources = list(
-    "pegasus" = list(
-        walltime=60*60*24, ntasks=200, memory=10000, logs="logs/"
-    ),
-    "jive_clin_fav_j1_a1"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=1
-    ),
-    "jive_clin_fav_j3_a1"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=1
-    ),
-    "jive_clin_fav_j1_a3"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=1
-    ),
-    "jive_clin_fav_j3_a3"=list(
-        walltime=60*60*24, ncpus=2, memory=10000, jobs_per_chunk=1
-    )
-)
-
-measures = list(
-    msr("surv.cindex", weight_meth="G2", p_max=0.9), # uno C
-    msr("surv.cindex", weight_meth="G2", id="cindex_default"), # uno C
-    msr("surv.graf", id="graf_default"),
-    msr("surv.graf", p_max=0.9), # ibrier
-    msr("surv.rcll"),
-    msr("surv.dcalib"),
-    msr("time_train"),
-    msr("time_predict"),
-    msr("time_both")
 )
