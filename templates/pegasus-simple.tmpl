@@ -1,0 +1,21 @@
+#!/bin/bash
+#MSUB -T <%= resources$walltime %>
+#MSUB -n <%= resources$ntasks %>
+#MSUB -r <%= job$registry %>
+#MSUB -c 1
+#MSUB -E --mem-per-cpu=<%= resources$mem %> 
+<%= if (!is.null(resources$log)){ 
+    paste0("#MSUB -o ", base::normalizePath(resources$log), "/job.%I.out")
+} %>
+<%= if (!is.null(resources$log)){ 
+    paste0("#MSUB -e ", base::normalizePath(resources$log), "/job.%I.err")
+} %>
+<%= if (!is.null(resources$partition)) paste0("#MSUB -q ", resources$partition) %>
+<%= if (!is.null(resources$qos)) paste0("#MSUB -E--qos=", resources$partition) %>
+
+module load pegasus
+module load micromamba
+micromamba activate -p env/r4.5.2
+
+ccc_mprun -n <%= resources$ntasks %> -c 1 \
+    pegasus-mpi-cluster <%= job$dag %>

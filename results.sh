@@ -7,10 +7,13 @@
 #MSUB -o logs/job.%I.out
 #MSUB -e logs/job.%I.err
 
+module load micromamba
+micromamba activate -p env/r4.5.2
+
 module load extenv/own
 module load benchbatch
 
-REG=AL_woClin
+REG=mcia_test
 
 mkdir results/$REG
 
