@@ -1,7 +1,9 @@
 resources = list(
     walltime=60*60*24,
-    ntasks=200,
+    ntasks=64,
     mem="10G",
     log="logs",
-    partition="normal"
+    partition="normal",
+    qos="default",
+    template="templates/pegasus-simple.tmpl"
 )

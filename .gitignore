@@ -2,3 +2,8 @@ registries/
 results/
 logs/
 data/
+env/*
+resources/*
+populate.sh
+run.sh
+results.sh
