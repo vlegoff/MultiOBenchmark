@@ -1,0 +1,47 @@
+#!/bin/bash
+
+function help() {
+    echo list of commands:
+    echo help: print help
+    echo populate: add models to batchtools registry from config files
+    echo run: run models
+    echo status: print jobs done, still runing and errors
+    echo results: extract performance measures from registry
+}
+
+function populate() {
+    Rscript $BENCHBATCH_R_FILES/populate.R "$@"
+}
+
+function run() {
+    Rscript $BENCHBATCH_R_FILES/run.R "$@"
+}
+
+function status() {
+    Rscript $BENCHBATCH_R_FILES/status.R "$@"
+}
+
+function results() {
+    Rscript $BENCHBATCH_R_FILES/results.R "$@"
+}
+
+function main() {
+    if ((${#} == 0)); then
+        help 0;
+        exit 0;
+    fi
+
+    case ${1} in
+        help | populate | run | status | results )
+            $1 "${@:2}";
+            ;;
+        * )
+            echo "unknown command"
+            help 1;
+            exit 1;
+            ;;
+    esac
+}
+
+BENCHBATCH_R_FILES="${BENCHBATCH_R_FILES:-R/}"
+main "$@"
