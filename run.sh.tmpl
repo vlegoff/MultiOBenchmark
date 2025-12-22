@@ -1,0 +1,30 @@
+#!/bin/bash
+#MSUB -q normal
+#MSUB -n 1
+#MSUB -c 8
+#MSUB -E --mem-per-cpu=10G
+#MSUB -T 7200
+#MSUB -o logs/job.%I.out
+#MSUB -e logs/job.%I.err
+
+#module load extenv/own
+#module load benchbatch
+
+# to replace custom module
+BENCHBATCH=benchbatchCLI/bin/benchbatch
+BENCHBATCH_R_FILES=benchbatchCLI/R
+ENV=env/inti_el9
+REG=MCIA_woClin
+
+module load micromamba
+micromamba activate -p $ENV
+
+REG=MCIA_woClin
+
+benchbatch run \
+    -m pegasus \
+    -c resources/pegasus.conf.R \
+    -r registries/$REG \
+    -N $SLURM_JOB_CPUS_PER_NODE \
+    --resubmit_not_finished #\
+    #--resubmit_errors
