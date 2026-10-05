@@ -15,7 +15,8 @@ cat << EOF > package_install.R
         "riskRegression",
         "survAUC",
         "SurvMetrics",
-        "tensorBSS"
+        "tensorBSS",
+        "coefplot"
     )
     packages_github <- c(
         "enorthrop/sup.r.jive",
@@ -25,7 +26,31 @@ cat << EOF > package_install.R
         "vlegoff/iClusterPlus"
     )
     install.packages(packages_cran, repos="https://pbil.univ-lyon1.fr/CRAN")
-    devtools::install_github(packages_github)
+    devtools::install_github(packages_github, upgrade_dependencies=FALSE)
+    # need version 0.8.2 of mlr3proba
+    mlr3verse = c(
+        "mlr3",
+        "mlr3batchmark",
+        "mlr3cluster",
+        "mlr3cmprsk",
+        "mlr3data",
+        "mlr3extralearners",
+        "mlr3filters",
+        "mlr3fselect",
+        "mlr3hyperband",
+        "mlr3inferr",
+        "mlr3learners",
+        "mlr3mbo",
+        "mlr3measures",
+        "mlr3misc",
+        "mlr3pipelines",
+        "mlr3proba",
+        "mlr3tuning",
+        "mlr3tuningspace",
+        "mlr3verse",
+        "mlr3viz"
+    )
+    install.packages(mlr3verse, repos="https://mlr-org.r-universe.dev")
 EOF
 
 Rscript package_install.R
