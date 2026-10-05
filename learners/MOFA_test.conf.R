@@ -1,0 +1,61 @@
+suppressMessages({
+    library(mlr3verse)
+    library(mlr3proba)
+    library(mlr3extralearners)
+    library(data.table)
+    library(survjdr)
+})
+
+blocks = c("cnv", "mirna", "mutation", "rna")
+internal_seed = 123
+
+learners <- list(
+    lrn(
+        "surv.mofa",
+        blocks=blocks,
+        clinical_fav=FALSE,
+        num_factors=10,
+        center=TRUE,
+        scale_views=TRUE,
+        spikeslab_factors=FALSE,
+        spikeslab_weights=TRUE,
+        ard_factors=FALSE,
+        ard_weights=TRUE,
+        convergence_mode="fast",
+        CV_measure="V&VH",
+        seed=internal_seed,
+        id="mofa_f10_fast"
+    ),
+    lrn(
+        "surv.mofa",
+        blocks=blocks,
+        clinical_fav=FALSE,
+        num_factors=10,
+        center=TRUE,
+        scale_views=TRUE,
+        spikeslab_factors=FALSE,
+        spikeslab_weights=TRUE,
+        ard_factors=FALSE,
+        ard_weights=TRUE,
+        convergence_mode="medium",
+        CV_measure="V&VH",
+        seed=internal_seed,
+        id="mofa_f10_medium"
+    ),
+    lrn(
+        "surv.mofa",
+        blocks=blocks,
+        clinical_fav=FALSE,
+        num_factors=10,
+        center=TRUE,
+        scale_views=TRUE,
+        spikeslab_factors=FALSE,
+        spikeslab_weights=TRUE,
+        ard_factors=FALSE,
+        ard_weights=TRUE,
+        convergence_mode="slow",
+        CV_measure="V&VH",
+        seed=internal_seed,
+        id="mofa_f10_slow"
+    )
+)

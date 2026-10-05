@@ -26,18 +26,6 @@ learners <- list(
     lrn(
         "surv.intnmf",
         blocks=blocks,
-        k=3,
-        weights="frob",
-        clinical_fav=TRUE,
-        n.ini=10,
-        CV_measure="V&VH",
-        cv_save_path=cv_save_path,
-        seed=internal_seed,
-        id="intnmf_clin_fav_k3_frob"
-    ), 
-    lrn(
-        "surv.intnmf",
-        blocks=blocks,
         k=5,
         weights="frob",
         clinical_fav=TRUE,
@@ -46,5 +34,17 @@ learners <- list(
         cv_save_path=cv_save_path,
         seed=internal_seed,
         id="intnmf_clin_fav_k5_frob"
+    ), 
+    lrn(
+        "surv.intnmf",
+        blocks=blocks,
+        k=10,
+        weights="frob",
+        clinical_fav=TRUE,
+        n.ini=10,
+        CV_measure="V&VH",
+        cv_save_path=cv_save_path,
+        seed=internal_seed,
+        id="intnmf_clin_fav_k10_frob"
     ) 
 )
