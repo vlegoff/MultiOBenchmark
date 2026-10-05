@@ -12,10 +12,12 @@ clin_registry = c("ref",
     #"SJIVE2",
     "intNMF",
     "MOFA",
-    "MOFA_hvg")
+    "MOFA_hvg",
+    "tFOBI",
+    "MCIA")
     #"RGCCA_test_clin",
-clin_registry = paste0(clin_registry, "/", clin_registry, "_results.csv")
-tbls = lapply(clin_registry, fread)
+res_files = paste0(clin_registry, "/", clin_registry, "_results.csv")
+tbls = lapply(res_files, fread)
 table_clin = rbindlist(tbls, fill=TRUE)
 table_clin[,clin:="with clinical data"]
 
@@ -28,9 +30,11 @@ woclin_registry = c("AL_woClin",
     #"SJIVE2_woClin",
     "intNMF_woClin",
     "MOFA_woClin",
-    "MOFA_hvg_woClin")
-woclin_registry = paste0(woclin_registry, "/", woclin_registry, "_results.csv")
-tbls = lapply(woclin_registry, fread)
+    "MOFA_hvg_woClin",
+    "tFOBI_woClin",
+    "MCIA_woClin")
+res_files = paste0(woclin_registry, "/", woclin_registry, "_results.csv")
+tbls = lapply(res_files, fread)
 table_woclin = rbindlist(tbls, fill=TRUE)
 table_woclin[,clin:="without clinical data"]
 
@@ -50,7 +54,7 @@ bmr %<>%
         mutate(type=case_when(
             clin=="reference" ~ "Reference",
             learner_id %in% c("ranger", "blockforest") ~ "Prev. study",
-            #learner_id %in% c("ranger_clin", "blockforest_clin") ~ "Prev. study",
+            learner_id %in% c("ranger_clin", "blockforest_clin") ~ "Prev. study",
             grepl("lasso", learner_id) ~ "Prev. study",
             grepl("rgcca_sup2", learner_id) ~ "RGCCA Sup. Clin.",
             grepl("rgcca_sup", learner_id) ~ "RGCCA Sup.",
@@ -61,7 +65,9 @@ bmr %<>%
             #grepl("[ja]0", learner_id) ~ "PCA",
             grepl("jive", learner_id) ~ "JIVE",
             grepl("mofa", learner_id) ~ "MOFA",
-            grepl("intnmf", learner_id) ~ "IntNMF"
+            grepl("intnmf", learner_id) ~ "IntNMF",
+            grepl("tFOBI", learner_id) ~ "tFOBI",
+            grepl("MCIA", learner_id) ~ "MCIA"
             )
         )
 
@@ -222,47 +228,39 @@ bmr_imp %>%
 # Still to check:
 # - better way to check clin/non clin learners
 
-folds = readRDS("../data/folds.rds")
-#cv_files = list.files("cv_logs", recursive=TRUE, full.names=TRUE,
-    #pattern="*.rds")
-cv_files = c(
-    list.files("cv_logs/SJIVE", recursive=TRUE, full.names=TRUE,
-        pattern="*.rds"),
-    list.files("cv_logs/SJIVE_woClin", recursive=TRUE, full.names=TRUE,
-        pattern="*.rds")
-)
-cv_results = lapply(cv_files, readRDS)
-folds_df = list()
-for (n in names(folds)) {
-    test = sapply(
-        folds[[n]]$test,
-        paste, collapse=" "
-    )    
-    folds_df[[n]] = data.frame(task_id=n, 
-        iteration=(1:length(test)),
-        fold=test)
-}
-folds_df = Reduce(rbind, folds_df)
+exclude = c("MOFA", "MOFA_woClin", "MOFA_hvg", "MOFA_hvg_woClin",
+            "ref", "AL", "AL_woClin")
 
-new_coef_dt = rbindlist(lapply(cv_results, \(x) data.table(
-    full_learner_id = x$learner_id,
-    task_id = x$task_id,
-    fold=paste(x$fold, collapse=" "),
-    beta=x$stanbeta,
-    comp=names(x$stanbeta)))) %>%
-    left_join(folds_df, by=c("task_id", "fold")) %>%
-    mutate(clin=ifelse(grepl("clin", full_learner_id),
-        "with clinical data", "without clinical data"))
+cv_files = paste("cv_logs", clin_registry[!(clin_registry %in% exclude)],
+                 "raw_cv_results.csv", sep="/")
+coef_files = paste("cv_logs", clin_registry[!(clin_registry %in% exclude)],
+                 "raw_coef_results.csv", sep="/")
+clin_cv = Reduce(rbind, lapply(cv_files, fread))
+clin_coef = Reduce(rbind, lapply(coef_files, fread))
 
-coef_dt = fread("coef.csv")
+cv_files = paste("cv_logs", woclin_registry[!(woclin_registry %in% exclude)],
+                 "raw_cv_results.csv", sep="/")
+coef_files = paste("cv_logs", woclin_registry[!(woclin_registry %in% exclude)],
+                 "raw_coef_results.csv", sep="/")
+woclin_cv = Reduce(rbind, lapply(cv_files, fread))
+woclin_coef = Reduce(rbind, lapply(coef_files, fread))
 
-coef_dt = coef_dt %>%
-    select(full_learner_id, task_id, iteration, clin) %>%
-    setdiff(new_coef_dt %>% select(full_learner_id, task_id, iteration, clin)) %>%
-    left_join(coef_dt) %>%
-    rbind(new_coef_dt) 
+cv_df = rbind(clin_cv, woclin_cv) %>%
+    mutate(full_learner_id=learner_id) %>%
+    mutate(clin=ifelse(grepl("clin_fav", learner_id), "with clinical data",
+                       "without clinical data")) %>%
+    mutate(learner_id=gsub("clin_fav_", "", learner_id))
 
-fwrite(coef_dt, "coef.csv")
+coef_df = rbind(clin_coef, woclin_coef) %>%
+    mutate(full_learner_id=learner_id) %>%
+    mutate(clin=ifelse(grepl("clin_fav", learner_id), "with clinical data",
+                       "without clinical data")) %>%
+    mutate(learner_id=gsub("clin_fav_", "", learner_id))
+
+fwrite(cv_df, "raw_cv_results.csv")
+fwrite(coef_df, "coef.csv")
+
+
 
 coef_dt %>%
     filter(clin=="without clinical data") %>%
@@ -333,16 +331,28 @@ cv_df %>%
     select(full_learner_id, task_id, iteration, clin) %>%
     setdiff(new_cv %>% select(full_learner_id, task_id, iteration, clin)) %>%
     pull(full_learner_id) %>%
-    unique()
+    unique() %>% grepl("tFOBI", .)
 
 fwrite(cv_df, "raw_cv_results.csv")
 
 bmr_cv = bmr_imp %>%
-    left_join(cv_df, by=c("clin", "full_learner_id", "task_id", "iteration")) %>%
+    left_join(cv_df %>%
+        mutate(full_learner_id=gsub("clin_fav_", "", full_learner_id)), 
+        by=c("clin", "full_learner_id", "task_id", "iteration")) %>%
     filter(!is.na(cv_metric)) %>%
     mutate(type=ifelse(type=="PCA", "JIVE", type)) %>%
     group_by(type, clin, iteration, task_id) %>%
     slice_min(cv_metric)
+
+bmr_cv = bmr_imp %>%
+    left_join(cv_df, by=c("clin", "learner_id", "task_id", "iteration")) %>%
+    filter(!is.na(cv_metric)) %>%
+    mutate(type=ifelse(type=="PCA", "JIVE", type)) %>%
+    group_by(type, clin, iteration, task_id) %>%
+    slice_min(cv_metric)
+
+bmr_cv %>%
+    pull(clin) %>% unique()
 
 bmr_cv %>%
     mutate(learner_id=type) %>%
