@@ -10,19 +10,19 @@ function help() {
 }
 
 function populate() {
-    Rscript populate.R "$@"
+    Rscript benchbatchCLI/populate.R "$@"
 }
 
 function run() {
-    Rscript run.R "$@"
+    Rscript benchbatchCLI/run.R "$@"
 }
 
 function status() {
-    Rscript status.R "$@"
+    Rscript benchbatchCLI/status.R "$@"
 }
 
 function results() {
-    Rscript results.R "$@"
+    Rscript benchbatchCLI/results.R "$@"
 }
 
 function main() {
