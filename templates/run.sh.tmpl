@@ -15,7 +15,7 @@ micromamba activate -p $ENV
 
 Rscript R/run.R \
     -m pegasus \
-    -c resources/pegasus.conf.R \
+    -c configs/resources/pegasus.conf.R \
     -r registries/$REG \
     -N $SLURM_JOB_CPUS_PER_NODE \
     --resubmit_not_finished
