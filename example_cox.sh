@@ -2,9 +2,9 @@ micromamba activate -p env/inti_el9
 
 # creating and populating batchtool registry with jobs to run
 Rscript R/populate.R \
-    -l learners/example_cox.conf.R \
+    -l configs/learners/example_cox.conf.R \
     -r registries/example_cox \
-    -d data/TCGA_example.conf.R \
+    -d configs/data/TCGA_example.conf.R \
     -N 8 \
     -s 1234
 

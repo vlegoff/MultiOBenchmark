@@ -10,7 +10,7 @@ suppressMessages({
 
 blocks = c("mirna", "rna")
 internal_seed = 123
-cv_save_path = "results/cv_logs/example"
+cv_save_path = "results/cv_logs/example_RGCCA"
 learners = list()
 
 tau = c(1)
@@ -28,7 +28,7 @@ for (i in 1:nrow(params_comb)) {
             ncomp=params_comb[i, "ncomp"],
             CV_measure="V&VH",
             nlambdas=100,
-            nfolds=10,
+            nfolds=3,
             cv_save_path=cv_save_path,
             seed=internal_seed,
             id=paste0("rgcca_", ifelse(params_comb[i, "supervised"], "sup", "unsup"),
