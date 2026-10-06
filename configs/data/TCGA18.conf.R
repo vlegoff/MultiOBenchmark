@@ -4,7 +4,7 @@ paired_cv = TRUE
 
 task_type="survival"
 
-data/herrmann2021sets = list(
+datasets = list(
     "BLCA"=list( #ID of the data/herrmann2021set
         path="data/herrmann2021/BLCA.csv", #path to the data (csv)
         target=c("time", "status"), #column names of the targets

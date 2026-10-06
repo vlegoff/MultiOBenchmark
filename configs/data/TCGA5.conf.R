@@ -2,7 +2,7 @@ cv = rsmp("cv", folds=5)
 
 task_type="survival"
 
-data/herrmann2021sets = list(
+datasets = list(
     "COAD"=list(
         path="data/herrmann2021/COAD.csv",
         target=c("time", "status"),
