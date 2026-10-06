@@ -17,4 +17,4 @@ Rscript R/merge_results.R \
     -f results \
     -d results \
     -N $SLURM_JOB_CPUS_PER_NODE \
-    -m measures.conf.R
+    -m configs/measures.conf.R

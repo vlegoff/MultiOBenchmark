@@ -19,6 +19,6 @@ Rscript R/run.R \
 Rscript R/results.R \
     -r registries/example_cox \
     -d results/example_cox \
-    -m measures.conf.R \
+    -m configs/measures.conf.R \
     -N 8 \
     -C 100 -v

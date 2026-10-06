@@ -4,7 +4,7 @@ micromamba activate -p env/inti_el9
 Rscript R/populate.R \
     -l configs/learners/example_RGCCA.conf.R \
     -r registries/example_RGCCA \
-    -d data/TCGA_example.conf.R \
+    -d configs/data/TCGA_example.conf.R \
     -N 8 \
     -s 1234
 
@@ -19,7 +19,7 @@ Rscript R/run.R \
 Rscript R/results.R \
     -r registries/example_RGCCA \
     -d results/example_RGCCA \
-    -m measures.conf.R \
+    -m configs/measures.conf.R \
     -N 8 \
     -C 100 -v
 
