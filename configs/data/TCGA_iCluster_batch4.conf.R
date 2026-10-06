@@ -10,7 +10,7 @@ task_type="survival"
 datasets = list()
 for (c in cancers) {
     datasets[[c]] = list(
-        path=paste0("data/", c, ".csv"),
+        path=paste0("data/herrmann2021/", c, ".csv"),
         target=c("time", "status"),
         strata=c("status")
     )

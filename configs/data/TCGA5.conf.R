@@ -2,29 +2,29 @@ cv = rsmp("cv", folds=5)
 
 task_type="survival"
 
-datasets = list(
+data/herrmann2021sets = list(
     "COAD"=list(
-        path="data/COAD.csv",
+        path="data/herrmann2021/COAD.csv",
         target=c("time", "status"),
         strata=c("status")
     ),
     "KIRC"=list(
-        path="data/KIRC.csv",
+        path="data/herrmann2021/KIRC.csv",
         target=c("time", "status"),
         strata=c("status")
     ),
     "LUSC"=list(
-        path="data/LUSC.csv",
+        path="data/herrmann2021/LUSC.csv",
         target=c("time", "status"),
         strata=c("status")
     ),
     "OV"=list(
-        path="data/OV.csv",
+        path="data/herrmann2021/OV.csv",
         target=c("time", "status"),
         strata=c("status")
     ),
     "SKCM"=list(
-        path="data/SKCM.csv",
+        path="data/herrmann2021/SKCM.csv",
         target=c("time", "status"),
         strata=c("status")
     )
