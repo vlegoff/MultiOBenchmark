@@ -10,9 +10,9 @@ for other tasks, methods and data.
 The code presented here relies heavily on the mlr3 R framework. It depends on
 2 custom packages:
 
-    - benchbatch, which wraps around mlr3 and batchtools to run an mlr3
-    benchmark on a High-Performance Computing (HPC) setting
-    - survjdr which implemends JDR methods as mlr3 learners
+- benchbatch, which wraps around mlr3 and batchtools to run an mlr3
+benchmark on a High-Performance Computing (HPC) setting
+- survjdr which implemends JDR methods as mlr3 learners
 
 These custom packages, the mlr3 framework, the JDR methods and all necessary
 dependencies are contained in a conda environment which can be installed by
@@ -36,15 +36,15 @@ for the tensorized datasets.
 
 Running the benchmark is done in 4 main steps:
 
-    - the populate step: a batchtools registry is created to store the jobs 
-    to run and "populated" with the appropriate jobs, as described in config 
-    files. Each (outer) resampling of a learner counts as a job.
-    - the run step: jobs from the registry created during the populate step are
-    run in parallel, either on separate cores of a single machine or, more
-    realistically, on multiple machines of an HPC setup.
-    - the results step: performance metrics are computed for the finished jobs
-    of a registry and gathered into a .csv file. For dimension reduction only,
-    results from the inner cross-validation are gathered into .csv file.
+- the populate step: a batchtools registry is created to store the jobs 
+to run and "populated" with the appropriate jobs, as described in config 
+files. Each (outer) resampling of a learner counts as a job.
+- the run step: jobs from the registry created during the populate step are
+run in parallel, either on separate cores of a single machine or, more
+realistically, on multiple machines of an HPC setup.
+- the results step: performance metrics are computed for the finished jobs
+of a registry and gathered into a .csv file. For dimension reduction only,
+results from the inner cross-validation are gathered into .csv file.
 
 Finally, the `merge_results.sh` script gather all results into a clean set of
 csv files.
