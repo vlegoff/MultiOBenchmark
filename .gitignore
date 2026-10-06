@@ -1,7 +1,7 @@
 registries/*
 logs/
 data/herrmann2021
-data/tensors
+data/tensor
 env/*
 resources/*
 run.sh
