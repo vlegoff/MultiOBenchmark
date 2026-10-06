@@ -1,22 +1,28 @@
 #!/bin/bash
-#SBATCH -p normal
-#SBATCH -n 1
-#SBATCH -c 4
-#SBATCH --mem-per-cpu=10G
-#SBATCH -t 24:00:00
-#SBATCH -o logs/job.%j.out
-#SBATCH -e logs/job.%j.err
+#MSUB -q normal
+#MSUB -n 1
+#MSUB -c 8
+#MSUB -E --mem-per-cpu=10G
+#MSUB -T 7200
+#MSUB -o logs/job.%I.out
+#MSUB -e logs/job.%I.err
 
-module load extenv/own
-module load benchbatch
+#module load extenv/own
+#module load benchbatch
 
-REG=test
+# to replace custom module
+ENV=env/inti_el9
+REG=JIVE
 
-benchbatch run \
+module load micromamba
+micromamba activate -p $ENV
+
+Rscript R/run.R \
     -m pegasus \
-    -c resources/pegasus.conf.R
+    -c resources/pegasus.conf.R \
     -r registries/$REG \
-    -l configs/${1}.conf.R \
-    -N 4 \
-    --resubmit_not_finished \
-    --resubmit_errors
+    -N $SLURM_JOB_CPUS_PER_NODE \
+    --resubmit_not_finished #\
+    #--resubmit_errors
+    #-m pegasus \
+    #-c resources/pegasus.conf.R \
