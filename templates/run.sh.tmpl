@@ -7,10 +7,6 @@
 #MSUB -o logs/job.%I.out
 #MSUB -e logs/job.%I.err
 
-#module load extenv/own
-#module load benchbatch
-
-# to replace custom module
 ENV=env/inti_el9
 REG=JIVE
 
@@ -22,7 +18,4 @@ Rscript R/run.R \
     -c resources/pegasus.conf.R \
     -r registries/$REG \
     -N $SLURM_JOB_CPUS_PER_NODE \
-    --resubmit_not_finished #\
-    #--resubmit_errors
-    #-m pegasus \
-    #-c resources/pegasus.conf.R \
+    --resubmit_not_finished

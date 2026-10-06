@@ -7,10 +7,7 @@
 #MSUB -o logs/job.%I.out
 #MSUB -e logs/job.%I.err
 
-#module load extenv/own
-#module load benchbatch
-
-# to replace custom module
+# loading env
 ENV=env/inti_el9
 REG=tJADE_woClin
 
@@ -18,10 +15,8 @@ module load micromamba
 micromamba activate -p $ENV
 
 Rscript R/populate.R \
-    -l learners/$REG.conf.R \
+    -l config/learners/$REG.conf.R \
     -r registries/$REG \
-    -d TCGA18_tensor.conf.R
+    -d configs/TCGA18_tensor.conf.R
     -N $SLURM_JOB_CPUS_PER_NODE \
     -s 1234
-    
-#-d TCGA18.conf.R 
