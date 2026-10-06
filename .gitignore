@@ -1,9 +1,10 @@
-registries/
-results/
+registries/*
 logs/
-data/
+data/herrmann2021
+data/tensors
 env/*
 resources/*
-populate.sh
 run.sh
+populate.sh
 results.sh
+cv_results.sh
