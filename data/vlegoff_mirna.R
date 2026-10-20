@@ -53,6 +53,7 @@ while(length(lost_mirs)>0 & n_try<=max_try) {
         rbind(more_targets |>
             subset(select=c(mature_mirna_id, target_ensembl, target_symbol)))
     lost_mirs = setdiff(mir_df$mature, unique(targets_df$mature_mirna_id))
+    n_try = n_try + 1
 }
 
 more_targets = get_multimir(mirna=lost_mirs, summary=FALSE)@data
