@@ -203,17 +203,17 @@ ggsave("1_aggr_perf.pdf", width=180, height=150, units="mm",
 # boxplot for each cancer, non aggregated
 for (c in cancer_order) {
   message(c)
-  bmr_for_boxplot = bmr_perf %>%
+  bmr_tmp = bmr_perf %>%
     filter(task_id==c) %>%
     mutate(supervised=case_when(
       grepl("Sup|sJIVE", method_name) ~ "supervised",
       .default="unsupervised"
     ))
-  yline = bmr_for_boxplot %>%
+  yline = bmr_tmp %>%
     filter(cv_id=="cox_ref") %>%
     group_by(measure) %>%
     summarise(yline=median(value))
-  bxplt_tmp = bmr_for_boxplot %>%
+  bxplt_tmp = bmr_tmp %>%
     left_join(yline) %>%
     ggplot(aes(x=method_name, y=value)) +
     geom_boxplot(aes(fill=method_type)) +
@@ -406,14 +406,7 @@ best = bmr_perf %>%
   slice_min(value, with_ties=FALSE) %>%
   ungroup() %>%
   mutate(value=ifelse(measure=="cindex_p0.9", -value, value)) %>%
-  left_join(pval_by_cancer %>%
-    mutate(clin=ifelse(grepl("clin", cv_id), "With clinical data", "Without clinical data")) %>%
-    select(clin, task_id, cv_id, measure, statistic, p_adj)
-  ) %>%
-  mutate(statistic=ifelse(grepl("graf", measure), -1*statistic, statistic)) %>%
-  mutate(symb=ifelse(statistic>0 & p_adj<0.05, " *", "")) %>%
-  mutate(method_name=paste0(method_name, symb)) %>%
-  select(-method_type, -cv_id, -statistic, -p_adj, -symb) %>%
+  select(-method_type, -cv_id) %>%
   mutate(clin=sub(" .*$", "", clin)) %>%
   mutate(measure=sub("_p0.9", "", measure)) %>%
   rename(name=method_name) %>%
@@ -476,7 +469,7 @@ bmr_perf %>%
 # folds are perfectly correlated on ESCA - graf
 bmr_perf %>%
   filter(
-    method_name %in% c("PCA Joint", "MOFA+MOTL"),
+    method_name %in% c("EI-PCA", "MOFA+MOTL"),
     task_id=="ESCA",
     clin=="Without clinical data",
     #measure=="cindex_p0.9"
@@ -659,6 +652,20 @@ ggsave("5_time.pdf", width=180, height=135, units="mm",
 
 sum(bmr_time$time_both, na.rm=TRUE)/3600 # total time of the benchmark in hours
 
+coef_for_plot = bmr %>%
+  filter(clin=="With clinical data") %>%
+  select(task_id, cv_id, learner_id, iteration, method_name, method_type) %>%
+  inner_join(coef %>% filter(var_type=="omics")) %>%
+  group_by(task_id, method_type, method_name, iteration) %>%
+  summarise(beta=sum(beta_norm2)) %>%
+  group_by(task_id, method_name, method_type) %>%
+  summarise(beta=mean(beta)) %>%
+  ungroup() %>%
+  mutate(supervised=case_when(
+    grepl("Sup|sJIVE", method_name) ~ "supervised",
+    .default="unsupervised"
+  )) %>%
+  mutate(task_id=forcats::fct_relevel(factor(task_id), cancer_order))
 boxplot = coef_for_plot %>%
   ggplot(aes(x=method_name, y=beta, fill=method_type)) +
   geom_boxplot() +
@@ -1179,7 +1186,7 @@ bmr_perf %>%
   pull(value) %>% median()
 
 # Creating dataframe with error rates
-bmr_error = read_csv("results/results_aggregated_raw.csv") %>%
+bmr_error = read_csv("data/benchmark/results_aggregated_raw.csv") %>%
   mutate(clin=case_when(
     grepl("clin", learner_id) ~ "With clinical data",
     grepl("ref", learner_id) ~ "Reference",
