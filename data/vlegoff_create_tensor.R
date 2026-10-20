@@ -2,6 +2,7 @@ library(tidyverse)
 library(data.table)
 
 ncpus = as.integer(Sys.getenv("SLURM_JOB_CPUS_PER_NODE"))
+ncpus = ifelse(is.null(ncpus), 1, ncpus)
 setDTthreads(ncpus)
 
 gene_map = fread("vlegoff_gene_id_map.csv")

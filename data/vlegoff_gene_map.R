@@ -137,13 +137,6 @@ gene_map_rev = ids |>
         hgnc_symbol)) |>
     subset(select=-c(hgnc_symbol.new, ensembl_gene_id.new))
 
-gene_map_rev |>
-    subset(hgnc_symbol!=hgnc_symbol.new)
-
-gene_map_rev |>
-    subset(ensembl_gene_id!=ensembl_gene_id.new,
-           select=c(orig_symbol, ensembl_gene_id, ensembl_gene_id.new, hgnc_symbol))
-
 # got 3 more genes
 gene_map_rev |>
     subset(is.na(ensembl_gene_id)) |>
@@ -226,26 +219,4 @@ gene_map_rev |>
     subset(is.na(ensembl_gene_id)) # victoire
 # only Unknown stay without ENSG
 
-#write.csv(gene_map_rev, "vlegoff_gene_id_map.csv", col.names=FALSE)
 readr::write_csv(gene_map_rev, "vlegoff_gene_id_map.csv")
-
-# sanity/hope checking
-getBM(
-    attributes=c("ensembl_gene_id", "hgnc_symbol"),
-    filters="ensembl_gene_id",
-    values=checked_ensg_by_hand$ensembl_gene_id,
-    mart=ensembl
-)
-
-manual = merge(corrected_hgnc, checked_ensg_by_hand, all.x=TRUE, all.y=TRUE,
-    by=c("orig_symbol"), suffixes=c("", ".y")) |>
-    transform(ensembl_gene_id=ifelse(is.na(ensembl_gene_id), ensembl_gene_id.y,
-        ensembl_gene_id)) |>
-    subset(select=-c(ensembl_gene_id.y))
-
-
-# sanity checking ids
-gene_map_rev |>
-    subset(!is.na(ensembl_gene_id) & !is.na(ensembl_gene_id.new)) |>
-    subset(ensembl_gene_id!=ensembl_gene_id.new,
-        select=c(ensembl_gene_id, ensembl_gene_id.new, hgnc_symbol))
