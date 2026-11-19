@@ -3,16 +3,19 @@
 This repositery contains the scripts used to run the benchmark presented in X.
 It is focused on measuring the performance of joint dimension reduction (JDR)
 for survival prediction from multi-omics data, but could in theory be reused
-for other tasks, methods and data.
+for other tasks, methods and data.q
+
+Code used to run bootstrap experiments for interpretability are available at 
+[vlegoff/JDR_bootstrap](https://github.com/vlegoff/JDR_bootstrap).
 
 ## Software installation
 
 The code presented here relies heavily on the mlr3 R framework. It depends on
 2 custom packages:
 
-- benchbatch, which wraps around mlr3 and batchtools to run an mlr3
+- [benchbatch](https://github.com/vlegoff/benchbatch), which wraps around mlr3 and batchtools to run an mlr3
 benchmark on a High-Performance Computing (HPC) setting
-- survjdr which implemends JDR methods as mlr3 learners
+- [survjdr](https://github.com/vlegoff/survjdr) which implemends JDR methods as mlr3 learners
 
 These custom packages, the mlr3 framework, the JDR methods and all necessary
 dependencies are contained in a conda environment which can be installed by
